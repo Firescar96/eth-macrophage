@@ -1,0 +1,25 @@
+{
+  "name": "eth-macrophage",
+  "version": "0.0.0",
+  "description": "Experiments of Ethereum node peer selection",
+  "main": "app.js",
+  "dependencies": {
+    "react": "^0.14.8",
+    "react-dom": "^0.14.8",
+    "react-mounter": "^1.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Firescar96/eth-macrophage.git"
+  },
+  "author": "Firescar96",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Firescar96/eth-macrophage/issues"
+  },
+  "homepage": "https://github.com/Firescar96/eth-macrophage#readme"
+}
