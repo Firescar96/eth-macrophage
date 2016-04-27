@@ -1,4 +1,4 @@
-import levelup from 'levelup';
+//import levelup from 'levelup';
 const spawn = Npm.require('child_process').spawn;
 const exec = Npm.require('child_process').exec;
 const NUM_GETH_INSTANCES = 5;
