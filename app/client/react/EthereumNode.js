@@ -22,19 +22,22 @@ EthereumNode.create = function (port) {
     })],
   });
 
-  //TODO: key this by id not port, but atm port is readily available
-  this.members[port] = new EthereumNode(web3);
-  return this.members[port];
+  let newNode = new EthereumNode(web3);
+  web3.admin.getNodeInfo( function (err, nodeInfo) {
+    EthereumNode.members[nodeInfo.id] = newNode;
+  });
+
+  return newNode;
 };
 
 //TODO: key this by id not port, but atm port is readily available
-EthereumNode.getNodePorts = function () {
+EthereumNode.getNodeIDs = function () {
   return Object.keys(EthereumNode.members);
 };
 
 //TODO: key this by id not port, but atm port is readily available
-EthereumNode.getNodeByPort = function (port) {
-  return this.members[port];
+EthereumNode.getNodeByID = function (id) {
+  return this.members[id];
 };
 
 EthereumNode.prototype.getNodeInfo = function () {

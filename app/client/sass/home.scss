@@ -1,0 +1,47 @@
+nav {
+
+  h1 {
+    display: block;
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  border-bottom: solid 2px black;
+}
+
+main {
+  display: flex;
+
+  div#nodeSidebar {
+    float: left;
+    button.nodeReference {
+      display: block;
+      position: relative;
+      margin: 10px;
+      padding: 0 5px;
+      background-color: transparent;
+      border: solid 2px black;
+      outline: none;
+      font-size: 24px;
+    }
+  }
+
+  div#graph {
+    flex: 1;
+  }
+
+  div#actionSidebar {
+    float: right;
+
+    button.nodeAction {
+      display: block;
+      position: relative;
+      margin: 10px;
+      padding: 0 5px;
+      background-color: transparent;
+      border: solid 2px black;
+      outline: none;
+      font-size: 24px;
+    }
+  }
+}
