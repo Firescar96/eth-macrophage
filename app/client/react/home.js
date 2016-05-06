@@ -1,6 +1,7 @@
 import React from 'react';
 import {mount} from 'react-mounter';
 import {EthereumNode} from './EthereumNode.js';
+import {Network} from './Network.js'
 
 let navbar = (
   <nav>
@@ -32,7 +33,7 @@ var Home = React.createClass({
     };
     setTimeout(updateNodes, 1000);
   },
-  render: function () {
+  render () {
     let nodeButtons = this.state.peerIDs.map( (id) => {
       return (
         <NodeButton key={id} id={id} />
@@ -48,9 +49,7 @@ var Home = React.createClass({
             {nodeButtons}
           </div>
 
-          <div id="graph">
-            Lorem ipsum dolor sit amet, consectetur
-          </div>
+          <div id="graph"></div>
 
           <div id="actionSidebar">
             <button className="nodeAction">
@@ -64,6 +63,11 @@ var Home = React.createClass({
 
       </div>
     );
+  },
+  componentDidMount () {
+    d3.json('data/call_me_al.json', function (json) {
+      return new Network('#graph', json);
+    });
   },
 });
 
