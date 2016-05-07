@@ -1,5 +1,6 @@
 function EthereumNode (web3) {
   this.web3 = web3;
+  this.id = '';
 }
 
 EthereumNode.members = {};
@@ -22,12 +23,16 @@ EthereumNode.create = function (port) {
     })],
   });
 
-  let newNode = new EthereumNode(web3);
-  web3.admin.getNodeInfo( function (err, nodeInfo) {
-    EthereumNode.members[nodeInfo.id] = newNode;
+  let defer = new Promise( (resolve, reject) => {
+    web3.admin.getNodeInfo( (err, nodeInfo) => {
+      let newNode = new EthereumNode(web3);
+      EthereumNode.members[nodeInfo.id] = newNode;
+      newNode.id = nodeInfo.id;
+      resolve(newNode);
+    });
   });
 
-  return newNode;
+  return defer;
 };
 
 //TODO: key this by id not port, but atm port is readily available
@@ -52,7 +57,7 @@ EthereumNode.prototype.getNodeInfo = function () {
 };
 
 EthereumNode.prototype.addPeer = function (enode) {
-  this.web3.admin.addPeer(enode);
+  this.web3.admin.addPeer(enode, ()=>{});
 };
 
 EthereumNode.prototype.getPeers = function () {
@@ -66,4 +71,5 @@ EthereumNode.prototype.getPeers = function () {
   return defer;
 };
 
+window.EthereumNode = EthereumNode;
 export {EthereumNode};
