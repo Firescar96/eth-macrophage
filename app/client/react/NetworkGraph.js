@@ -1,14 +1,14 @@
-import {EthereumNode} from './EthereumNode.js';
+import {EthereumNetwork} from './EthereumNetwork.js';
 
 class NetworkGraph {
   constructor (selection, data) {
     this.width = 960;
     this.height = 800;
-    this.curLinksData = [];
-    this.curNodesData = [];
+    this.curLinksData = new Set();
+    this.curNodesData = new Set();
     this.linkedByIndex = {};
     this.nodeColors = d3.scale.category20();
-    this.allData = this._setupData(data);
+    this.graphData = this._setupData(data);
     let vis = d3.select(selection)
     .append('svg').attr('width', this.width)
     .attr('height', this.height);
@@ -16,8 +16,8 @@ class NetworkGraph {
     this.nodesG = vis.append('g').attr('id', 'nodes');
     this.force = d3.layout.force()
     .size([this.width, this.height])
-    .charge(-200)
-    .linkDistance(50)
+    .charge(-500)
+    .linkDistance(200)
     .on('tick', this._forceTick.bind(this));
     this._update();
   }
@@ -28,17 +28,16 @@ class NetworkGraph {
       //TODO: scale radious based on number of peers
       n.r = 5;
     });
+    data.nodes = new Set(data.nodes);
     data.links.forEach((l) => {
-      console.log(l.source);
-      console.log(l.target);
-      console.log(EthereumNode.members);
-      l.source = EthereumNode.getNodeByID(l.source);
-      l.target = EthereumNode.getNodeByID(l.target);
-      console.log(l.source);
-      console.log(l.target);
-      this.linkedByIndex[l.source.id + ',' + l.target.id] = 1;
+      //order statically to prevent duplicates
+      var source = l.source.localeCompare(l.target) ? l.source : l.target;
+      var target = l.source.localeCompare(l.target) ? l.target : l.source;
+      this.linkedByIndex[source + ',' + target] = 1;
+      l.source = EthereumNetwork.getNodeByID(source);
+      l.target = EthereumNetwork.getNodeByID(target);
     });
-    console.log(data);
+    data.links = new Set(data.links);
     return data;
   }
   _forceTick (e) {
@@ -95,8 +94,8 @@ class NetworkGraph {
     link.exit().remove();
   }
   _update () {
-    this.curNodesData = this.allData.nodes;
-    this.curLinksData = this.allData.links;
+    this.curNodesData = [...this.graphData.nodes];
+    this.curLinksData = [...this.graphData.links];
 
     this.force.nodes(this.curNodesData);
     this._updateNodes();
@@ -104,8 +103,14 @@ class NetworkGraph {
     this._updateLinks();
     this.force.start();
   }
-  updateData (newData) {
-    this.allData = setupData(newData);
+  updateGraphData (newData) {
+    this.graphData = _setupData(newData);
+    this._update();
+  }
+  addGraphData (newData) {
+    var graphData = _setupData(newData);
+    this.graphData.nodes.add(...graphData.nodes);
+    this.graphData.links.add(...graphData.links);
     this._update();
   }
 }

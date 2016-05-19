@@ -22,15 +22,19 @@ let NodeButton = React.createClass({
 var Home = React.createClass({
   getInitialState () {
     return {
-      peerIDs: [],
+      peerIDs:      [],
+      networkGraph: null,
     };
   },
   componentWillMount () {
     var self = this;
     let updateNodes = function () {
-      self.setState({peerIDs: EthereumNode.getNodeIDs() });
+      self.setState({peerIDs: EthereumNetwork.getNodeIDs() });
     };
     setTimeout(updateNodes, 1000);
+  },
+  addNode () {
+    console.log("hool");
   },
   render () {
     let nodeButtons = this.state.peerIDs.map( (id) => {
@@ -51,7 +55,7 @@ var Home = React.createClass({
       <div id="graph"></div>
 
       <div id="actionSidebar">
-      <button className="nodeAction">
+      <button className="nodeAction" onClick={this.addNode}>
       add Node
       </button>
       <button className="nodeAction">
@@ -68,25 +72,29 @@ var Home = React.createClass({
       //return new Network('#graph', json);
     });
     let graphData = {};
-    graphData.nodes = EthereumNode.getNodeIDs().map((nodeID) => {
-      return EthereumNode.getNodeByID(nodeID);
+    graphData.nodes = EthereumNetwork.getNodeIDs().map((nodeID) => {
+      return EthereumNetwork.getNodeByID(nodeID);
     });
-    console.log('node ids', EthereumNode.getNodeIDs());
-    console.log('gnodes', graphData.nodes);
     graphData.links = [];
     new Promise((fufill, reject) => {
-      graphData.nodes.forEach((node) => {
-        node.getPeers().then(([err, peers]) => {
-          graphData.links.push(...peers.map((peer) => {
-            return {'source': node.id, 'target': peer.id};
-          }));
-          //TODO: rewrite this more cleanly
-          fufill();
+      var getPeersPromises = graphData.nodes.map((node) => {
+        return new Promise((fufill2, reject1) => {
+          node.getPeers().then(([err, peers]) => {
+            graphData.links.push(...peers.map((peer) => {
+              return {'source': node.id, 'target': peer.id};
+            }));
+            //TODO: rewrite this section more cleanly if possible
+            fufill2();
+          });
         });
+      });
+
+      Promise.all(getPeersPromises).then( () => {
+        fufill();
       });
     })
     .then(() => {
-      return new NetworkGraph('#graph', graphData);
+      this.networkGraph = new NetworkGraph('#graph', graphData);
     });
   },
 });

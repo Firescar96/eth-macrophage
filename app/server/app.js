@@ -1,7 +1,7 @@
 //import levelup from 'levelup';
 const spawn = Npm.require('child_process').spawn;
 const exec = Npm.require('child_process').exec;
-const NUM_GETH_INSTANCES = 10;
+const NUM_GETH_INSTANCES = 5;
 const GETH_BASE_PORT = 21000;
 const GETH_BASE_RPCPORT = 22000;
 const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
@@ -18,7 +18,7 @@ var gethInstance = {
   rpcport:       GETH_BASE_RPCPORT,
   rpcaddr:       '127.0.0.1',
   rpcapi:        'admin,web3',
-  networkid:     3574,
+  networkid:     35742222,
   rpccorsdomain: 'http://127.0.0.1:3000',
   minerthreads:  1,
   genesis:       Assets.absoluteFilePath('genesis.json'),
@@ -62,4 +62,8 @@ for(var i = 0; i < NUM_GETH_INSTANCES; i++) {
     })],
   });
   web3Conns.push(web3);
+
+  this.web3.admin.getNodeInfo( function (err, nodeInfo) {
+    console.log(nodeInfo.id);
+  });
 }

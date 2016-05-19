@@ -1,9 +1,8 @@
 class EthereumNode {
 
-  constructior () {
+  constructor () {
     this.web3 = null;
     this.id = '';
-    this.members = {};
   }
 
   initializeConnection (port) {
@@ -28,7 +27,6 @@ class EthereumNode {
 
     let defer = new Promise( (resolve, reject) => {
       web3.admin.getNodeInfo( (err, nodeInfo) => {
-        EthereumNode.members[nodeInfo.id] = this;
         this.id = nodeInfo.id;
         resolve(this);
       });
@@ -47,14 +45,32 @@ class EthereumNode {
     return defer;
   }
 
-  addPeer (enode) {
-    this.web3.admin.addPeer(enode, ()=>{});
+  /*Adds a peer node. If no node is given adds the bootnode*/
+  addPeer (bootnode) {
+    bootnode = bootnode || EthereumNetwork.getDefaultBootnode();
+    let defer = new Promise( (fufill, reject) => {
+      bootnode.getNodeInfo().then(([err, bootnodeInfo]) => {
+        this.web3.admin.addPeer(bootnodeInfo.enode, ()=>{});
+        fufill();
+      });
+    });
+
+    return defer;
   }
 
   getPeers () {
     var node = this;
     let defer = new Promise( function (fufill, reject) {
       node.web3.admin.getPeers( function (err, peers) {
+        peers = peers.map((peer) => {
+          return EthereumNetwork.getNodeByID(peer.id);
+        });
+
+        /*sometimes geth/web3 will return nodes that don't exist,
+        one way to remove them is to only allow nodes EthereumNetwork
+        already knows about*/
+        peers = peers.filter(Boolean);
+
         fufill([err, peers]);
       });
     });
@@ -62,16 +78,6 @@ class EthereumNode {
     return defer;
   }
 }
-EthereumNode.members = {};
-//TODO: key this by id not port, but atm port is readily available
-EthereumNode.getNodeIDs = function () {
-  return Object.keys(EthereumNode.members);
-};
-
-//TODO: key this by id not port, but atm port is readily available
-EthereumNode.getNodeByID = function (id) {
-  return EthereumNode.members[id];
-};
 
 window.EthereumNode = EthereumNode;
 export {EthereumNode};
