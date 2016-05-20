@@ -1,10 +1,9 @@
 import React from 'react';
-import {EthereumNode} from './EthereumNode.js';
 import {NetworkGraph} from './NetworkGraph.js';
 
 let navbar = (
   <nav>
-  <h1>Ethereum Macrophage</h1>
+    <h1>Ethereum Macrophage</h1>
   </nav>
 );
 
@@ -13,7 +12,7 @@ let NodeButton = React.createClass({
   render () {
     return (
       <button className="nodeReference">
-      {this.props.id.substring(0, 10)}
+        {this.props.id.substring(0, 10)}
       </button>
     );
   },
@@ -21,81 +20,100 @@ let NodeButton = React.createClass({
 
 var Home = React.createClass({
   getInitialState () {
-    return {
-      peerIDs:      [],
-      networkGraph: null,
-    };
+    return {peerIDs: [], updateDOM: true};
   },
   componentWillMount () {
-    var self = this;
     let updateNodes = function () {
-      self.setState({peerIDs: EthereumNetwork.getNodeIDs() });
+      let nodeIDs = EthereumNetwork.getNodeIDs();
+
+      let sameIDs = this.state.peerIDs.every((v, i) => v === nodeIDs[i]);
+      if(this.state.peerIDs.length !== nodeIDs.length || !sameIDs) {
+        this.setState({peerIDs: nodeIDs, updateDOM: true});
+      }
     };
-    setTimeout(updateNodes, 1000);
+    setInterval(updateNodes.bind(this), 1000);
   },
   addNode () {
-    console.log("hool");
+    EthereumNetwork.createNode().then((newNode) => {
+      newNode.addPeer();
+      let graphData = {};
+      graphData.nodes = [newNode];
+      graphData.links = [];
+      newNode.getPeers().then(([err, peers]) => {
+        graphData.links.push(...peers.map((peer) => {
+          return {'source': newNode.id, 'target': peer.id};
+        }));
+          console.log(peers);
+
+        this.state.networkGraph.addGraphData(graphData);
+        this.setState({peerIDs: EthereumNetwork.getNodeIDs(), updateDOM: false});
+      });
+    });
+  },
+  shouldComponentUpdate (nextProps, nextState) {
+    return nextState.updateDOM;
   },
   render () {
-    let nodeButtons = this.state.peerIDs.map( (id) => {
-      return (
-        <NodeButton key={id} id={id} />
-      );
+    let nodeButtons = this.state.peerIDs.map((id) => {
+      return (<NodeButton key={id} id={id}/>);
     });
 
     return (
       <div>
-      {navbar}
+        {navbar}
 
-      <main>
-      <div id="nodeSidebar">
-      {nodeButtons}
-      </div>
+        <main>
+          <div id="nodeSidebar">
+            {nodeButtons}
+          </div>
 
-      <div id="graph"></div>
+          <div id="graph"></div>
 
-      <div id="actionSidebar">
-      <button className="nodeAction" onClick={this.addNode}>
-      add Node
-      </button>
-      <button className="nodeAction">
-      remove Node
-      </button>
-      </div>
-      </main>
+          <div id="actionSidebar">
+            <button className="nodeAction" onClick={this.addNode}>
+              add Node
+            </button>
+            <button className="nodeAction" disabled>
+              remove Node
+            </button>
+          </div>
+        </main>
 
       </div>
     );
   },
   componentDidMount () {
-    d3.json('data/call_me_al.json', function (json) {
-      //return new Network('#graph', json);
+    let graphData = {};
+    graphData.nodes = [];
+    graphData.links = [];
+    this.setState({
+      networkGraph: new NetworkGraph('#graph', graphData),
+      updateDOM:    false,
     });
+    this.componentDidUpdate();
+  },
+  componentDidUpdate () {
     let graphData = {};
     graphData.nodes = EthereumNetwork.getNodeIDs().map((nodeID) => {
       return EthereumNetwork.getNodeByID(nodeID);
     });
     graphData.links = [];
-    new Promise((fufill, reject) => {
-      var getPeersPromises = graphData.nodes.map((node) => {
-        return new Promise((fufill2, reject1) => {
-          node.getPeers().then(([err, peers]) => {
-            graphData.links.push(...peers.map((peer) => {
-              return {'source': node.id, 'target': peer.id};
-            }));
-            //TODO: rewrite this section more cleanly if possible
-            fufill2();
-          });
+
+    var getPeersPromises = graphData.nodes.map((node) => {
+      return new Promise((fufill, reject1) => {
+        node.getPeers().then(([err, peers]) => {
+          graphData.links.push(...peers.map((peer) => {
+            return {'source': node.id, 'target': peer.id};
+          }));
+          fufill();
         });
       });
-
-      Promise.all(getPeersPromises).then( () => {
-        fufill();
-      });
-    })
-    .then(() => {
-      this.networkGraph = new NetworkGraph('#graph', graphData);
     });
+
+    Promise.all(getPeersPromises).then(() => {
+      this.state.networkGraph.updateGraphData(graphData);
+    });
+
   },
 });
 

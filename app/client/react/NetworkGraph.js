@@ -104,13 +104,17 @@ class NetworkGraph {
     this.force.start();
   }
   updateGraphData (newData) {
-    this.graphData = _setupData(newData);
+    this.graphData = this._setupData(newData);
     this._update();
   }
   addGraphData (newData) {
-    var graphData = _setupData(newData);
-    this.graphData.nodes.add(...graphData.nodes);
-    this.graphData.links.add(...graphData.links);
+    var graphData = this._setupData(newData);
+    graphData.nodes.forEach((node) => {
+      this.graphData.nodes.add(node);
+    });
+    graphData.links.forEach((link) => {
+      this.graphData.links.add(link);
+    });
     this._update();
   }
 }
