@@ -67,6 +67,7 @@ class NetworkGraph {
       return d.id;
     });
 
+    let nodesG = this.nodesG;
     node.enter()
     .append('circle')
     .attr('class', 'node')
@@ -75,7 +76,11 @@ class NetworkGraph {
     .attr('r', (d) => { return d.r; })
     //.style('fill', (d) => { return this.nodeColors(d.artist); })
     //.style('stroke', (d) => { return this._strokeFor(d); })
-    .style('stroke-width', 1.0);
+    .style('stroke-width', 1.0)
+    .on('click', function () {
+      nodesG.selectAll('circle.node').attr('fill', '#000');
+      d3.select(this).attr('fill', '#f00');
+    });
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);
     node.exit().remove();
   }

@@ -27,6 +27,7 @@ var Home = React.createClass({
       let nodeIDs = EthereumNetwork.getNodeIDs();
 
       let sameIDs = this.state.peerIDs.every((v, i) => v === nodeIDs[i]);
+
       if(this.state.peerIDs.length !== nodeIDs.length || !sameIDs) {
         this.setState({peerIDs: nodeIDs, updateDOM: true});
       }
@@ -43,7 +44,6 @@ var Home = React.createClass({
         graphData.links.push(...peers.map((peer) => {
           return {'source': newNode.id, 'target': peer.id};
         }));
-          console.log(peers);
 
         this.state.networkGraph.addGraphData(graphData);
         this.setState({peerIDs: EthereumNetwork.getNodeIDs(), updateDOM: false});

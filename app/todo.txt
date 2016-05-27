@@ -1,0 +1,9 @@
+get the node account -> get the first accoun
+set the default account to the first account
+
+
+show additional options when node is selected
+  show the send transaction
+send a transaction to a dummy address from the first account
+
+setup a transaction listener and echo when a message is received

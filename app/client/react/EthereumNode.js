@@ -26,10 +26,18 @@ class EthereumNode {
     this.web3 = web3;
 
     let defer = new Promise( (resolve, reject) => {
-      web3.admin.getNodeInfo( (err, nodeInfo) => {
-        this.id = nodeInfo.id;
-        resolve(this);
-      });
+      let nodeInfoTimer = setInterval(() => {
+        console.log(web3);
+        console.log(web3.isConnected());
+        if(web3.isConnected()) {
+          web3.admin.getNodeInfo( (err, nodeInfo) => {
+            console.log(nodeInfo.id);
+            this.id = nodeInfo.id;
+            resolve(this);
+          });
+          clearInterval(nodeInfoTimer);
+        }
+      }, 1000);
     });
 
     return defer;
