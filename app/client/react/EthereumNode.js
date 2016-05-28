@@ -3,6 +3,7 @@ class EthereumNode {
   constructor () {
     this.web3 = null;
     this.id = '';
+    this.filter = null;
   }
 
   initializeConnection (port) {
@@ -27,17 +28,36 @@ class EthereumNode {
 
     let defer = new Promise( (resolve, reject) => {
       let nodeInfoTimer = setInterval(() => {
-        console.log(web3);
-        console.log(web3.isConnected());
-        if(web3.isConnected()) {
-          web3.admin.getNodeInfo( (err, nodeInfo) => {
-            console.log(nodeInfo.id);
-            this.id = nodeInfo.id;
-            resolve(this);
-          });
-          clearInterval(nodeInfoTimer);
-        }
+        this.isConnected()
+        .then( ([err, connected]) => {
+          if(connected) {
+            clearInterval(nodeInfoTimer);
+            return this.getNodeInfo();
+          }
+
+          return Promise.reject('node is not connected');
+        })
+        .then(([err, nodeInfo]) => {
+          this.id = nodeInfo.id;
+          return this.getAccounts();
+        })
+        .then(([err, accounts]) => {
+          this.web3.eth.defaultAccount = accounts[0];
+          resolve(this);
+        });
       }, 1000);
+    });
+
+    this.filter = this.web3.eth.filter('pending');
+
+    return defer;
+  }
+
+  isConnected () {
+    let defer = new Promise((resolve, reject) => {
+      this.web3.net.getListening( (err, listening) => {
+        resolve([err, listening]);
+      });
     });
 
     return defer;
@@ -45,8 +65,18 @@ class EthereumNode {
 
   getNodeInfo () {
     let defer = new Promise( (fufill, reject) => {
-      this.web3.admin.getNodeInfo( function (err, nodeInfo) {
+      this.web3.admin.getNodeInfo(function (err, nodeInfo) {
         fufill([err, nodeInfo]);
+      });
+    });
+
+    return defer;
+  }
+
+  getAccounts () {
+    let defer = new Promise( (fufill, reject) => {
+      this.web3.eth.getAccounts(function (err, accounts) {
+        fufill([err, accounts]);
       });
     });
 
@@ -67,9 +97,8 @@ class EthereumNode {
   }
 
   getPeers () {
-    var node = this;
-    let defer = new Promise( function (fufill, reject) {
-      node.web3.admin.getPeers( function (err, peers) {
+    let defer = new Promise( (fufill, reject) => {
+      this.web3.admin.getPeers( function (err, peers) {
         peers = peers.map((peer) => {
           return EthereumNetwork.getNodeByID(peer.id);
         });
@@ -84,6 +113,20 @@ class EthereumNode {
     });
 
     return defer;
+  }
+
+  sendTransaction (txObj) {
+    let defer = new Promise( (fufill, reject) => {
+      this.web3.eth.sendTransaction(txObj, (err, result) => {
+        fufill([err, result]);
+      });
+    });
+
+    return defer;
+  }
+
+  filter () {
+
   }
 }
 

@@ -1,13 +1,19 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
 
 class NetworkGraph {
-  constructor (selection, data) {
-    this.width = 960;
-    this.height = 800;
+  /*
+    selection: html element in which to inset the graph
+    data: JSON object of the graph data
+    updateDOM: function that will triger updates to the containing DOM
+  */
+  constructor (selection, data, updateDOM) {
+    this._updateDOM = updateDOM;
+    this.width = 660;
+    this.height = 500;
     this.curLinksData = new Set();
     this.curNodesData = new Set();
-    this.linkedByIndex = {};
-    this.nodeColors = d3.scale.category20();
+    ///this.nodeColors = d3.scale.category20();
+    this._selectedNode = null;
     this.graphData = this._setupData(data);
     let vis = d3.select(selection)
     .append('svg').attr('width', this.width)
@@ -33,7 +39,6 @@ class NetworkGraph {
       //order statically to prevent duplicates
       var source = l.source.localeCompare(l.target) ? l.source : l.target;
       var target = l.source.localeCompare(l.target) ? l.target : l.source;
-      this.linkedByIndex[source + ',' + target] = 1;
       l.source = EthereumNetwork.getNodeByID(source);
       l.target = EthereumNetwork.getNodeByID(target);
     });
@@ -67,7 +72,7 @@ class NetworkGraph {
       return d.id;
     });
 
-    let nodesG = this.nodesG;
+    let networkGraph = this;
     node.enter()
     .append('circle')
     .attr('class', 'node')
@@ -78,8 +83,10 @@ class NetworkGraph {
     //.style('stroke', (d) => { return this._strokeFor(d); })
     .style('stroke-width', 1.0)
     .on('click', function () {
-      nodesG.selectAll('circle.node').attr('fill', '#000');
-      d3.select(this).attr('fill', '#f00');
+      networkGraph.nodesG.selectAll('circle.node').attr('fill', '#000');
+      networkGraph._selectedNode = d3.select(this);
+      networkGraph._selectedNode.attr('fill', '#f00');
+      networkGraph._updateDOM();
     });
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);
     node.exit().remove();
@@ -121,6 +128,12 @@ class NetworkGraph {
       this.graphData.links.add(link);
     });
     this._update();
+  }
+  getSelectedNode () {
+    if(!this._selectedNode) {
+      return null;
+    }
+    return this._selectedNode.data()[0];
   }
 }
 

@@ -18,7 +18,6 @@ EthereumNetwork.getNodeByID = function (id) {
 EthereumNetwork.createNode = function () {
   //TODO put this increment in a lock
   let currentNonce = EthereumNetwork._currentNonce++;
-  console.log(EthereumNetwork._currentNonce);
   let defer = new Promise((resolve, reject) => {
     var newNode = new EthereumNode();
     Meteor.call('createGethInstance',

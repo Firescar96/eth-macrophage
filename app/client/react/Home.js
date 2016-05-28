@@ -20,7 +20,7 @@ let NodeButton = React.createClass({
 
 var Home = React.createClass({
   getInitialState () {
-    return {peerIDs: [], updateDOM: true};
+    return {peerIDs: [], shouldUpdateDOM: true};
   },
   componentWillMount () {
     let updateNodes = function () {
@@ -29,7 +29,7 @@ var Home = React.createClass({
       let sameIDs = this.state.peerIDs.every((v, i) => v === nodeIDs[i]);
 
       if(this.state.peerIDs.length !== nodeIDs.length || !sameIDs) {
-        this.setState({peerIDs: nodeIDs, updateDOM: true});
+        this.setState({peerIDs: nodeIDs, shouldUpdateDOM: true});
       }
     };
     setInterval(updateNodes.bind(this), 1000);
@@ -46,17 +46,25 @@ var Home = React.createClass({
         }));
 
         this.state.networkGraph.addGraphData(graphData);
-        this.setState({peerIDs: EthereumNetwork.getNodeIDs(), updateDOM: false});
       });
     });
   },
+  sendMessage () {
+    let selectedNode = this.state.networkGraph.getSelectedNode();
+    selectedNode.sendTransaction({
+      to:    '0x0000000000000000000000000000000000000000',
+      value: 1,
+    });
+  },
   shouldComponentUpdate (nextProps, nextState) {
-    return nextState.updateDOM;
+    return nextState.shouldUpdateDOM;
   },
   render () {
     let nodeButtons = this.state.peerIDs.map((id) => {
       return (<NodeButton key={id} id={id}/>);
     });
+
+    let isNodeSelected = this.state.networkGraph && !!this.state.networkGraph.getSelectedNode();
 
     return (
       <div>
@@ -71,10 +79,13 @@ var Home = React.createClass({
 
           <div id="actionSidebar">
             <button className="nodeAction" onClick={this.addNode}>
-              add Node
+              add node
             </button>
             <button className="nodeAction" disabled>
-              remove Node
+              remove node
+            </button>
+            <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
+              send message
             </button>
           </div>
         </main>
@@ -87,8 +98,8 @@ var Home = React.createClass({
     graphData.nodes = [];
     graphData.links = [];
     this.setState({
-      networkGraph: new NetworkGraph('#graph', graphData),
-      updateDOM:    false,
+      networkGraph:    new NetworkGraph('#graph', graphData, this.forceUpdate.bind(this)),
+      shouldUpdateDOM: false,
     });
     this.componentDidUpdate();
   },

@@ -20,7 +20,7 @@ var gethConfig = {
   rpc:           true,
   rpcport:       GETH_BASE_RPCPORT,
   rpcaddr:       '127.0.0.1',
-  rpcapi:        'admin,web3,eth',
+  rpcapi:        'admin,web3,eth,net',
   networkid:     35742222,
   rpccorsdomain: 'http://127.0.0.1:3000',
   minerthreads:  1,
