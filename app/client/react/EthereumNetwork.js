@@ -19,7 +19,7 @@ EthereumNetwork.createNode = function () {
   //TODO put this increment in a lock
   let currentNonce = EthereumNetwork._currentNonce++;
   let defer = new Promise((resolve, reject) => {
-    var newNode = new EthereumNode();
+    var newNode = new EthereumNode(currentNonce);
     Meteor.call('createGethInstance',
     {nonce: currentNonce},
     (err, rpcport) => {
@@ -39,7 +39,7 @@ EthereumNetwork.createNode = function () {
 };
 
 EthereumNetwork.addNode = function (node) {
-  EthereumNetwork._members[node.id] = node;
+  EthereumNetwork._members[node.nodeID] = node;
 };
 
 EthereumNetwork.setDefaultBootnode = function (bootnode) {

@@ -1,10 +1,11 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
+import { Tracker } from 'meteor/tracker'
 
 class NetworkGraph {
   /*
-    selection: html element in which to inset the graph
-    data: JSON object of the graph data
-    updateDOM: function that will triger updates to the containing DOM
+  selection: html element in which to inset the graph
+  data: JSON object of the graph data
+  updateDOM: function that will triger updates to the containing DOM
   */
   constructor (selection, data, updateDOM) {
     this._updateDOM = updateDOM;
@@ -47,7 +48,7 @@ class NetworkGraph {
   }
   _forceTick (e) {
     let node = this.nodesG.selectAll('circle.node').data(this.curNodesData, function (d) {
-      return d.id;
+      return d.nodeID;
     });
 
     node
@@ -55,7 +56,7 @@ class NetworkGraph {
     .attr('cy', (d) => { return d.y; });
 
     let link = this.linksG.selectAll('line.link').data(this.curLinksData, function (d) {
-      return d.source.id + '_' + d.target.id;
+      return d.source.nodeID + '_' + d.target.nodeID;
     });
 
     link
@@ -65,11 +66,31 @@ class NetworkGraph {
     .attr('y2', (d) => { return d.target.y; });
   }
   /*_strokeFor (d) {
-    return d3.rgb(this.nodeColors(d.artist)).darker().toString();
+  return d3.rgb(this.nodeColors(d.artist)).darker().toString();
   }*/
   _updateNodes () {
-    let node = this.nodesG.selectAll('circle.node').data(this.curNodesData, function (d) {
-      return d.id;
+    let node = this.nodesG.selectAll('circle.node')
+    .data(this.curNodesData, function (d) {
+      return d.nodeID;
+    });
+
+    this.nodesG.selectAll('circle.node')
+    .data(this.curNodesData, function (d) {
+      return d.nodeID;
+    })
+    .enter()
+    .call((d) => {
+      Tracker.autorun(() => {
+        if(d[0].length > 0) {
+          d3.selectAll(d[0]).data().forEach( (ethereumNode) => {
+            ethereumNode.LogData.find({}).observeChanges({
+              added: function (id, data) {
+                console.log(id, data);
+              },
+            });
+          });
+        }
+      });
     });
 
     let networkGraph = this;
@@ -93,7 +114,7 @@ class NetworkGraph {
   }
   _updateLinks () {
     let link = this.linksG.selectAll('line.link').data(this.curLinksData, function (d) {
-      return d.source.id + '_' + d.target.id;
+      return d.source.nodeID + '_' + d.target.nodeID;
     });
     link
     .enter().append('line')

@@ -1,9 +1,13 @@
 class EthereumNode {
 
-  constructor () {
+  constructor (id) {
+    this.id = id;
+    this.LogData = new Mongo.Collection('logdata' + id);
+    Meteor.subscribe('logdata' + id);
     this.web3 = null;
-    this.id = '';
+    this.nodeID = '';
     this.filter = null;
+    this.defaultAccount = null;
   }
 
   initializeConnection (port) {
@@ -28,7 +32,7 @@ class EthereumNode {
 
     let defer = new Promise( (resolve, reject) => {
       let nodeInfoTimer = setInterval(() => {
-        this.isConnected()
+        this.becomeConnected()
         .then( ([err, connected]) => {
           if(connected) {
             clearInterval(nodeInfoTimer);
@@ -38,11 +42,11 @@ class EthereumNode {
           return Promise.reject('node is not connected');
         })
         .then(([err, nodeInfo]) => {
-          this.id = nodeInfo.id;
+          this.nodeID = nodeInfo.id;
           return this.getAccounts();
         })
         .then(([err, accounts]) => {
-          this.web3.eth.defaultAccount = accounts[0];
+          this.defaultAccount = accounts[0];
           resolve(this);
         });
       }, 1000);
@@ -53,7 +57,7 @@ class EthereumNode {
     return defer;
   }
 
-  isConnected () {
+  becomeConnected () {
     let defer = new Promise((resolve, reject) => {
       this.web3.net.getListening( (err, listening) => {
         resolve([err, listening]);
@@ -88,8 +92,9 @@ class EthereumNode {
     bootnode = bootnode || EthereumNetwork.getDefaultBootnode();
     let defer = new Promise( (fufill, reject) => {
       bootnode.getNodeInfo().then(([err, bootnodeInfo]) => {
-        this.web3.admin.addPeer(bootnodeInfo.enode, ()=>{});
-        fufill();
+        this.web3.admin.addPeer(bootnodeInfo.enode, ()=>{
+          fufill();
+        });
       });
     });
 

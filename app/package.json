@@ -6,7 +6,8 @@
   "dependencies": {
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
-    "react-mounter": "^1.2.0"
+    "react-mounter": "^1.2.0",
+    "tail-stream": "^0.2.1"
   },
   "devDependencies": {},
   "scripts": {

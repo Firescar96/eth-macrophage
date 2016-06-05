@@ -1,9 +1,11 @@
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo'
 
-//import levelup from 'levelup';
 const spawn = Npm.require('child_process').spawn;
 const exec = Npm.require('child_process').exec;
-//const NUM_GETH_INSTANCES = 5;
+
+var tailStream = require('tail-stream');
+
 const GETH_BASE_PORT = 21000;
 const GETH_BASE_RPCPORT = 22000;
 const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
@@ -26,7 +28,7 @@ var gethConfig = {
   minerthreads:  1,
   genesis:       Assets.absoluteFilePath('genesis.json'),
   password:      Assets.absoluteFilePath('password'),
-  bootnodes:     '',
+  bootnodes:     '""',
 };
 
 function createGethInstance () {
@@ -39,25 +41,41 @@ function createGethInstance () {
   gethInstanceConfig.port = GETH_BASE_PORT + curNonce;
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
   gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
-  exec('mkdir ' + gethInstanceConfig.datadir);
-  exec('geth --datadir ' + gethInstanceConfig.datadir + ' --password ' +
-  gethInstanceConfig.password + ' account new', () => {
+  gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
+  exec('touch ' + gethInstanceConfig.logfile, Meteor.bindEnvironment(() => {
+    let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
 
-    let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--logfile=' +
-    gethInstanceConfig.logfile, '--port=' + gethInstanceConfig.port, '--rpc', '--rpcport=' +
-    gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr, '--rpcapi=' +
-    gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
-    '--rpccorsdomain=' + gethInstanceConfig .rpccorsdomain, '--minerthreads=' +
-    gethInstanceConfig.minerthreads, '--genesis=' + gethInstanceConfig.genesis, '--unlock=0',
-    '--password=' + gethInstanceConfig.password, '--bootnodes=' + gethInstanceConfig.bootnodes,
-    'js', Assets.absoluteFilePath('mine.js')]);
-
-    //For some reason geth flips the out and err output..or something
-    cmd.stdout.on('data', (data) => {
-      console.error(data.toString());
+    let LogData = new Mongo.Collection('logdata' + curNonce);
+    LogData.remove({});
+    Meteor.publish('logdata' + curNonce, function () {
+      return LogData.find({});
     });
-    cmd.stderr.on('data', (err) => {
-      console.log(err.toString());
+    logStream.on('data', Meteor.bindEnvironment( function (data) {
+      LogData.insert({data: String(data)});
+    }));
+  }));
+
+  exec('mkdir ' + gethInstanceConfig.datadir);
+  exec('geth --datadir=' + gethInstanceConfig.datadir + ' --password=' +
+  gethInstanceConfig.password + ' account new', function () {
+    exec('geth --datadir=' + gethInstanceConfig.datadir +
+    ' init ' + gethInstanceConfig.genesis, () => {
+
+      let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--logfile=' +
+      gethInstanceConfig.logfile, '--port=' + gethInstanceConfig.port, '--rpc', '--rpcport=' +
+      gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr, '--rpcapi=' +
+      gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
+      '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
+      '--password=' + gethInstanceConfig.password, '--bootnodes=' + gethInstanceConfig.bootnodes,
+      'js', Assets.absoluteFilePath('mine.js')]);
+
+      //For some reason geth flips the out and err output..or something
+      cmd.stdout.on('data', (data) => {
+        console.log(data.toString());
+      });
+      cmd.stderr.on('data', (err) => {
+        console.error(err.toString());
+      });
     });
   });
 

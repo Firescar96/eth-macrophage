@@ -12,7 +12,7 @@ let NodeButton = React.createClass({
   render () {
     return (
       <button className="nodeReference">
-        {this.props.id.substring(0, 10)}
+        {this.props.nodeID.substring(0, 10)}
       </button>
     );
   },
@@ -42,7 +42,7 @@ var Home = React.createClass({
       graphData.links = [];
       newNode.getPeers().then(([err, peers]) => {
         graphData.links.push(...peers.map((peer) => {
-          return {'source': newNode.id, 'target': peer.id};
+          return {'source': newNode.nodeID, 'target': peer.nodeID};
         }));
 
         this.state.networkGraph.addGraphData(graphData);
@@ -52,6 +52,7 @@ var Home = React.createClass({
   sendMessage () {
     let selectedNode = this.state.networkGraph.getSelectedNode();
     selectedNode.sendTransaction({
+      from:  selectedNode.defaultAccount,
       to:    '0x0000000000000000000000000000000000000000',
       value: 1,
     });
@@ -61,7 +62,7 @@ var Home = React.createClass({
   },
   render () {
     let nodeButtons = this.state.peerIDs.map((id) => {
-      return (<NodeButton key={id} id={id}/>);
+      return (<NodeButton key={id} nodeID={id}/>);
     });
 
     let isNodeSelected = this.state.networkGraph && !!this.state.networkGraph.getSelectedNode();
@@ -114,7 +115,7 @@ var Home = React.createClass({
       return new Promise((fufill, reject1) => {
         node.getPeers().then(([err, peers]) => {
           graphData.links.push(...peers.map((peer) => {
-            return {'source': node.id, 'target': peer.id};
+            return {'source': node.nodeID, 'target': peer.nodeID};
           }));
           fufill();
         });

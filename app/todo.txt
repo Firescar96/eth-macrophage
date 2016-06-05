@@ -1,3 +1,4 @@
 more gracefully handle the updates when a node is clicked so the graph doesn't update and jerk all over the place
 
 setup a transaction listener and echo when a message is received
+-allow the network to call EthereumNode and setup a callback for animations
