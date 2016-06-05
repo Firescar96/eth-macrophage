@@ -42,15 +42,15 @@ function createGethInstance () {
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
   gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
   gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
+  let _curNonce = curNonce;
   exec('touch ' + gethInstanceConfig.logfile, Meteor.bindEnvironment(() => {
     let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
-
-    let LogData = new Mongo.Collection('logdata' + curNonce);
+    let LogData = new Mongo.Collection('logdata' + _curNonce);
     LogData.remove({});
-    Meteor.publish('logdata' + curNonce, function () {
+    Meteor.publish('logdata' + _curNonce, function () {
       return LogData.find({});
     });
-    logStream.on('data', Meteor.bindEnvironment( function (data) {
+    logStream.on('data', Meteor.bindEnvironment( (data) => {
       LogData.insert({data: String(data)});
     }));
   }));
@@ -71,7 +71,7 @@ function createGethInstance () {
 
       //For some reason geth flips the out and err output..or something
       cmd.stdout.on('data', (data) => {
-        console.log(data.toString());
+        //console.log(data.toString());
       });
       cmd.stderr.on('data', (err) => {
         console.error(err.toString());

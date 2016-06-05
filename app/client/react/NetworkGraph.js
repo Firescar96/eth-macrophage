@@ -1,5 +1,4 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
-import { Tracker } from 'meteor/tracker'
 
 class NetworkGraph {
   /*
@@ -21,6 +20,7 @@ class NetworkGraph {
     .attr('height', this.height);
     this.linksG = vis.append('g').attr('id', 'links');
     this.nodesG = vis.append('g').attr('id', 'nodes');
+    this.messagesG = vis.append('g').attr('id', 'messages');
     this.force = d3.layout.force()
     .size([this.width, this.height])
     .charge(-500)
@@ -38,8 +38,8 @@ class NetworkGraph {
     data.nodes = new Set(data.nodes);
     data.links.forEach((l) => {
       //order statically to prevent duplicates
-      var source = l.source.localeCompare(l.target) ? l.source : l.target;
-      var target = l.source.localeCompare(l.target) ? l.target : l.source;
+      let source = l.source.localeCompare(l.target) > 0 ? l.source : l.target;
+      let target = l.source.localeCompare(l.target) > 0 ? l.target : l.source;
       l.source = EthereumNetwork.getNodeByID(source);
       l.target = EthereumNetwork.getNodeByID(target);
     });
@@ -65,36 +65,57 @@ class NetworkGraph {
     .attr('x2', (d) => { return d.target.x; })
     .attr('y2', (d) => { return d.target.y; });
   }
-  /*_strokeFor (d) {
-  return d3.rgb(this.nodeColors(d.artist)).darker().toString();
-  }*/
+  _messageListener (targetNode, message) {
+    let messages = /\{.*\}/.exec(message);
+    if(!!messages && messages.length == 1) {
+      message = JSON.parse(messages[0]);
+
+      if(!EthereumNetwork.getNodeIDs().includes(message.From)) {
+        return;
+      }
+      this.linksG.selectAll('line.link')
+      .filter((d) => {
+        let hasSource1 = d.source.nodeID.localeCompare(targetNode.nodeID) === 0;
+        let hasTarget1 = d.target.nodeID.localeCompare(message.From) === 0;
+        let hasSource2 = d.source.nodeID.localeCompare(message.From) === 0;
+        let hasTarget2 = d.target.nodeID.localeCompare(targetNode.nodeID) === 0;
+        return (hasSource1 && hasTarget1) || (hasSource2 && hasTarget2);
+      }).call((ds) => {
+        if(ds.empty()) {
+          return;
+        }
+        this.messagesG
+        .append('circle')
+        .attr('class', 'message')
+        .attr('cx', (d) => { return EthereumNetwork.getNodeByID(message.From).x; })
+        .attr('cy', (d) => { return EthereumNetwork.getNodeByID(message.From).y; })
+        .attr('r', (d) => { return 10; })
+        .style('stroke-width', 1.0)
+        .transition()
+        .duration(4000)
+        .attr('cx', (d) => { return targetNode.x; })
+        .attr('cy', (d) => { return targetNode.y; })
+        .attr('r', (d) => { return 20; })
+        .attr('fill', '#062f99')
+        .remove();
+      });
+    }
+  }
   _updateNodes () {
     let node = this.nodesG.selectAll('circle.node')
     .data(this.curNodesData, function (d) {
       return d.nodeID;
     });
 
-    this.nodesG.selectAll('circle.node')
-    .data(this.curNodesData, function (d) {
-      return d.nodeID;
-    })
-    .enter()
-    .call((d) => {
-      Tracker.autorun(() => {
-        if(d[0].length > 0) {
-          d3.selectAll(d[0]).data().forEach( (ethereumNode) => {
-            ethereumNode.LogData.find({}).observeChanges({
-              added: function (id, data) {
-                console.log(id, data);
-              },
-            });
-          });
-        }
-      });
-    });
-
     let networkGraph = this;
     node.enter()
+    .call((d) => {
+      if(d[0].length > 0) {
+        d3.selectAll(d[0]).data().forEach( (ethereumNode) => {
+          ethereumNode.logFilter(this._messageListener.bind(this));
+        });
+      }
+    })
     .append('circle')
     .attr('class', 'node')
     .attr('cx', (d) => { return d.x; })
@@ -108,6 +129,7 @@ class NetworkGraph {
       networkGraph._selectedNode = d3.select(this);
       networkGraph._selectedNode.attr('fill', '#f00');
       networkGraph._updateDOM();
+      console.log('selected node with id:' + networkGraph._selectedNode.data()[0].nodeID);
     });
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);
     node.exit().remove();

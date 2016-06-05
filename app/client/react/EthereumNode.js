@@ -130,8 +130,12 @@ class EthereumNode {
     return defer;
   }
 
-  filter () {
-
+  logFilter (callback) {
+    this.LogData.find({}).observeChanges({
+      added: (id, data) => {
+        callback(this, data.data);
+      },
+    });
   }
 }
 
