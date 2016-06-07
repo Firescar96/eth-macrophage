@@ -71,7 +71,7 @@ function createGethInstance () {
 
       //For some reason geth flips the out and err output..or something
       cmd.stdout.on('data', (data) => {
-        //console.log(data.toString());
+        console.log(data.toString());
       });
       cmd.stderr.on('data', (err) => {
         console.error(err.toString());
@@ -84,13 +84,10 @@ function createGethInstance () {
 
 Meteor.methods({
   createGethInstance ({nonce}) {
-    console.log('entry', curNonce);
     if(nonce >= curNonce) {
       createGethInstance();
-      console.log('exit', curNonce);
       return GETH_BASE_RPCPORT + (curNonce - 1);
     }
-    console.log(nonce);
     return GETH_BASE_RPCPORT + nonce;
   },
 });

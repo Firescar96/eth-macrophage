@@ -10,11 +10,12 @@ class NetworkGraph {
     this._updateDOM = updateDOM;
     this.width = 660;
     this.height = 500;
-    this.curLinksData = new Set();
-    this.curNodesData = new Set();
+    this.curLinksData = [];
+    this.curNodesData = [];
     ///this.nodeColors = d3.scale.category20();
     this._selectedNode = null;
-    this.graphData = this._setupData(data);
+    this.graphData = {nodes: [], links: []};
+    this._setupData(this.graphData);
     let vis = d3.select(selection)
     .append('svg').attr('width', this.width)
     .attr('height', this.height);
@@ -29,21 +30,39 @@ class NetworkGraph {
     this._update();
   }
   _setupData (data) {
-    data.nodes.forEach((n) => {
+
+    let newNodes = data.nodes.map((nID) => {
+      let n = EthereumNetwork.getNodeByID(nID);
       n.x = Math.floor(Math.random() * this.width);
       n.y = Math.floor(Math.random() * this.height);
       //TODO: scale radious based on number of peers
       n.r = 5;
+      return n;
     });
-    data.nodes = new Set(data.nodes);
-    data.links.forEach((l) => {
+    this.graphData.nodes.push(...newNodes);
+    //data.nodes = [...new Set(data.nodes)];
+    let newLinks = data.links.map((l) => {
       //order statically to prevent duplicates
       let source = l.source.localeCompare(l.target) > 0 ? l.source : l.target;
       let target = l.source.localeCompare(l.target) > 0 ? l.target : l.source;
-      l.source = EthereumNetwork.getNodeByID(source);
-      l.target = EthereumNetwork.getNodeByID(target);
+      return {
+        source: EthereumNetwork.getNodeByID(source),
+        target: EthereumNetwork.getNodeByID(target),
+      };
     });
-    data.links = new Set(data.links);
+    newLinks.forEach((link1, i1, links1) => {
+      links1.some((link2, i2, links2) => {
+        if(i1 == i2) {
+          return false;
+        }
+        if(link1.source === link2.source && link1.target === link2.target) {
+          links1.splice(i2, 1);
+          return true;
+        }
+        return false;
+      });
+    });
+    this.graphData.links.push(...newLinks);
     return data;
   }
   _forceTick (e) {
@@ -93,8 +112,22 @@ class NetworkGraph {
         .style('stroke-width', 1.0)
         .transition()
         .duration(4000)
-        .attr('cx', (d) => { return targetNode.x; })
-        .attr('cy', (d) => { return targetNode.y; })
+        .attrTween('cx', function (d, i, a) {
+          return function (t) {
+            let cx0 = EthereumNetwork.getNodeByID(message.From).x;
+            let cx1 = targetNode.x;
+            let terpolater = d3.interpolateRound(cx0, cx1);
+            return terpolater(t);
+          };
+        })
+        .attrTween('cy', function (d, i, a) {
+          return function (t) {
+            let cy0 = EthereumNetwork.getNodeByID(message.From).y;
+            let cy1 = targetNode.y;
+            let terpolater = d3.interpolateRound(cy0, cy1);
+            return terpolater(t);
+          };
+        })
         .attr('r', (d) => { return 20; })
         .attr('fill', '#062f99')
         .remove();
@@ -129,7 +162,6 @@ class NetworkGraph {
       networkGraph._selectedNode = d3.select(this);
       networkGraph._selectedNode.attr('fill', '#f00');
       networkGraph._updateDOM();
-      console.log('selected node with id:' + networkGraph._selectedNode.data()[0].nodeID);
     });
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);
     node.exit().remove();
@@ -149,8 +181,8 @@ class NetworkGraph {
     link.exit().remove();
   }
   _update () {
-    this.curNodesData = [...this.graphData.nodes];
-    this.curLinksData = [...this.graphData.links];
+    this.curNodesData = this.graphData.nodes;
+    this.curLinksData = this.graphData.links;
 
     this.force.nodes(this.curNodesData);
     this._updateNodes();
@@ -158,18 +190,34 @@ class NetworkGraph {
     this._updateLinks();
     this.force.start();
   }
-  updateGraphData (newData) {
-    this.graphData = this._setupData(newData);
+  setGraphData (newData) {
+    this._setupData(newData);
     this._update();
   }
-  addGraphData (newData) {
-    var graphData = this._setupData(newData);
-    graphData.nodes.forEach((node) => {
-      this.graphData.nodes.add(node);
+  updateGraphData (newData) {
+    let graphData = {nodes: [], links: []};
+    newData.nodes.forEach((nodeID) => {
+      let node = EthereumNetwork.getNodeByID(nodeID);
+      if(!this.graphData.nodes.includes(node)) {
+        graphData.nodes.push(nodeID);
+      }
     });
-    graphData.links.forEach((link) => {
-      this.graphData.links.add(link);
+
+    newData.links.forEach((link1) => {
+      let source = link1.source.localeCompare(link1.target) > 0 ? link1.source : link1.target;
+      let target = link1.source.localeCompare(link1.target) > 0 ? link1.target : link1.source;
+
+      let linkExists = this.graphData.links.some((link2) => {
+        return source.localeCompare(link2.source.nodeID) === 0 &&
+        target.localeCompare(link2.target.nodeID) === 0;
+      });
+      if(!linkExists) {
+        graphData.links.push(link1);
+      }
     });
+
+    this._setupData(graphData);
+
     this._update();
   }
   getSelectedNode () {
@@ -177,6 +225,15 @@ class NetworkGraph {
       return null;
     }
     return this._selectedNode.data()[0];
+  }
+  setSelectedNode (selectedNodeID) {
+    this.nodesG.selectAll('circle.node').attr('fill', '#000');
+    this._selectedNode = this.nodesG.selectAll('circle.node')
+    .filter((d) => {
+      return selectedNodeID.localeCompare(d.nodeID) == 0;
+    })
+    .attr('fill', '#f00');
+    this._updateDOM();
   }
 }
 
