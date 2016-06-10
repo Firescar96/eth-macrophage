@@ -1,8 +1,13 @@
 class EthereumNetwork {}
 
-// const GETH_BASE_RPCPORT = 22000;
-
 EthereumNetwork._members = {};
+EthereumNetwork._nodeIDCollection = new Mongo.Collection('networkMemberIDs');
+Meteor.subscribe('networkMemberIDs', () => {
+  EthereumNetwork._nodeIDCollection.find().forEach((data) => {
+    EthereumNetwork._nodeIDCollection.remove(data._id);
+  });
+});
+
 EthereumNetwork._defaultBootnode;
 EthereumNetwork._currentNonce = 0;
 //TODO: key this by id not port, but atm port is readily available
@@ -39,7 +44,11 @@ EthereumNetwork.createNode = function () {
 };
 
 EthereumNetwork.addNode = function (node) {
+  if(EthereumNetwork._members[node.nodeID]) {
+    return;
+  }
   EthereumNetwork._members[node.nodeID] = node;
+  EthereumNetwork._nodeIDCollection.insert({id: node.nodeID});
 };
 
 EthereumNetwork.setDefaultBootnode = function (bootnode) {
@@ -47,6 +56,17 @@ EthereumNetwork.setDefaultBootnode = function (bootnode) {
 };
 EthereumNetwork.getDefaultBootnode = function (bootnode) {
   return EthereumNetwork._defaultBootnode;
+};
+
+EthereumNetwork.nodeFilter = function (callback) {
+  EthereumNetwork._nodeIDCollection.find().observeChanges({
+    added: (id, data) => {
+      let ethereumNode = EthereumNetwork.getNodeByID(data.id);
+      if(ethereumNode) {
+        callback(ethereumNode);
+      }
+    },
+  });
 };
 
 window.EthereumNetwork = EthereumNetwork;

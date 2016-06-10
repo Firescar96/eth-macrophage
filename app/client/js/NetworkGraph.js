@@ -85,54 +85,49 @@ class NetworkGraph {
     .attr('y2', (d) => { return d.target.y; });
   }
   _messageListener (targetNode, message) {
-    let messages = /\{.*\}/.exec(message);
-    if(!!messages && messages.length == 1) {
-      message = JSON.parse(messages[0]);
-
-      if(!EthereumNetwork.getNodeIDs().includes(message.From)) {
+    if(!EthereumNetwork.getNodeIDs().includes(message.from)) {
+      return;
+    }
+    this.linksG.selectAll('line.link')
+    .filter((d) => {
+      let hasSource1 = d.source.nodeID.localeCompare(targetNode.nodeID) === 0;
+      let hasTarget1 = d.target.nodeID.localeCompare(message.from) === 0;
+      let hasSource2 = d.source.nodeID.localeCompare(message.from) === 0;
+      let hasTarget2 = d.target.nodeID.localeCompare(targetNode.nodeID) === 0;
+      return (hasSource1 && hasTarget1) || (hasSource2 && hasTarget2);
+    }).call((ds) => {
+      if(ds.empty()) {
         return;
       }
-      this.linksG.selectAll('line.link')
-      .filter((d) => {
-        let hasSource1 = d.source.nodeID.localeCompare(targetNode.nodeID) === 0;
-        let hasTarget1 = d.target.nodeID.localeCompare(message.From) === 0;
-        let hasSource2 = d.source.nodeID.localeCompare(message.From) === 0;
-        let hasTarget2 = d.target.nodeID.localeCompare(targetNode.nodeID) === 0;
-        return (hasSource1 && hasTarget1) || (hasSource2 && hasTarget2);
-      }).call((ds) => {
-        if(ds.empty()) {
-          return;
-        }
-        this.messagesG
-        .append('circle')
-        .attr('class', 'message')
-        .attr('cx', (d) => { return EthereumNetwork.getNodeByID(message.From).x; })
-        .attr('cy', (d) => { return EthereumNetwork.getNodeByID(message.From).y; })
-        .attr('r', (d) => { return 10; })
-        .style('stroke-width', 1.0)
-        .transition()
-        .duration(4000)
-        .attrTween('cx', function (d, i, a) {
-          return function (t) {
-            let cx0 = EthereumNetwork.getNodeByID(message.From).x;
-            let cx1 = targetNode.x;
-            let terpolater = d3.interpolateRound(cx0, cx1);
-            return terpolater(t);
-          };
-        })
-        .attrTween('cy', function (d, i, a) {
-          return function (t) {
-            let cy0 = EthereumNetwork.getNodeByID(message.From).y;
-            let cy1 = targetNode.y;
-            let terpolater = d3.interpolateRound(cy0, cy1);
-            return terpolater(t);
-          };
-        })
-        .attr('r', (d) => { return 20; })
-        .attr('fill', '#062f99')
-        .remove();
-      });
-    }
+      this.messagesG
+      .append('circle')
+      .attr('class', 'message')
+      .attr('cx', (d) => { return EthereumNetwork.getNodeByID(message.from).x; })
+      .attr('cy', (d) => { return EthereumNetwork.getNodeByID(message.from).y; })
+      .attr('r', (d) => { return 10; })
+      .style('stroke-width', 1.0)
+      .transition()
+      .duration(4000)
+      .attrTween('cx', function (d, i, a) {
+        return function (t) {
+          let cx0 = EthereumNetwork.getNodeByID(message.from).x;
+          let cx1 = targetNode.x;
+          let terpolater = d3.interpolateRound(cx0, cx1);
+          return terpolater(t);
+        };
+      })
+      .attrTween('cy', function (d, i, a) {
+        return function (t) {
+          let cy0 = EthereumNetwork.getNodeByID(message.from).y;
+          let cy1 = targetNode.y;
+          let terpolater = d3.interpolateRound(cy0, cy1);
+          return terpolater(t);
+        };
+      })
+      .attr('r', (d) => { return 20; })
+      .attr('fill', '#5066a1')
+      .remove();
+    });
   }
   _updateNodes () {
     let node = this.nodesG.selectAll('circle.node')

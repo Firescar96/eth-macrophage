@@ -1,5 +1,21 @@
 import { Meteor } from 'meteor/meteor';
-import { Mongo } from 'meteor/mongo'
+import { Mongo } from 'meteor/mongo';
+let _NetworkMemberIDs = new Mongo.Collection('networkMemberIDs');
+Meteor.publish('networkMemberIDs', () => {
+  return _NetworkMemberIDs.find({});
+});
+_NetworkMemberIDs.allow({
+  insert: function (userId, doc) {
+    return true;
+  },
+  update: function (userId, doc, fields, modifier) {
+    return true;
+  },
+  remove: function (userId, doc) {
+    return true;
+  },
+});
+
 
 const spawn = Npm.require('child_process').spawn;
 const exec = Npm.require('child_process').exec;
@@ -10,7 +26,7 @@ const GETH_BASE_PORT = 21000;
 const GETH_BASE_RPCPORT = 22000;
 const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
 
-let curNonce = 0;
+let curNonceState = 0;
 
 exec('mkdir ' + GETH_BASE_DATADIR);
 
@@ -24,7 +40,7 @@ var gethConfig = {
   rpcaddr:       '127.0.0.1',
   rpcapi:        'admin,web3,eth,net',
   networkid:     35742222,
-  rpccorsdomain: 'http://127.0.0.1:3000',
+  rpccorsdomain: 'http://127.0.0.1:3000, http://localhost:3000',
   minerthreads:  1,
   genesis:       Assets.absoluteFilePath('genesis.json'),
   password:      Assets.absoluteFilePath('password'),
@@ -32,6 +48,7 @@ var gethConfig = {
 };
 
 function createGethInstance () {
+  let curNonce = curNonceState;
   //need an instance so the callback below will use this version and not changes
   let gethInstanceConfig = {};
   for(let attr in gethConfig) {
@@ -42,20 +59,24 @@ function createGethInstance () {
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
   gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
   gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
-  let _curNonce = curNonce;
+  let LogData = new Mongo.Collection('logdata' + curNonce);
+  LogData.remove({});
+  Meteor.publish('logdata' + curNonce, () => {
+    return LogData.find({});
+  });
+
+  exec('mkdir ' + gethInstanceConfig.datadir);
   exec('touch ' + gethInstanceConfig.logfile, Meteor.bindEnvironment(() => {
     let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
-    let LogData = new Mongo.Collection('logdata' + _curNonce);
-    LogData.remove({});
-    Meteor.publish('logdata' + _curNonce, function () {
-      return LogData.find({});
-    });
     logStream.on('data', Meteor.bindEnvironment( (data) => {
-      LogData.insert({data: String(data)});
+      let messages = /\{.*\}/.exec(data);
+      if(!!messages && messages.length == 1) {
+        let message = JSON.parse(messages[0]);
+        LogData.insert(message);
+      }
     }));
   }));
 
-  exec('mkdir ' + gethInstanceConfig.datadir);
   exec('geth --datadir=' + gethInstanceConfig.datadir + ' --password=' +
   gethInstanceConfig.password + ' account new', function () {
     exec('geth --datadir=' + gethInstanceConfig.datadir +
@@ -71,7 +92,7 @@ function createGethInstance () {
 
       //For some reason geth flips the out and err output..or something
       cmd.stdout.on('data', (data) => {
-        console.log(data.toString());
+        //console.log(data.toString());
       });
       cmd.stderr.on('data', (err) => {
         console.error(err.toString());
@@ -79,14 +100,14 @@ function createGethInstance () {
     });
   });
 
-  curNonce++;
+  curNonceState++;
 }
 
 Meteor.methods({
   createGethInstance ({nonce}) {
-    if(nonce >= curNonce) {
+    if(nonce >= curNonceState) {
       createGethInstance();
-      return GETH_BASE_RPCPORT + (curNonce - 1);
+      return GETH_BASE_RPCPORT + (curNonceState - 1);
     }
     return GETH_BASE_RPCPORT + nonce;
   },
