@@ -22,6 +22,3 @@ EthereumNetwork.createNode().then((bootnode) => {
     mount(Home);
   });
 });
-
-
-//export {EthMacrophage};

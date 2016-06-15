@@ -90,16 +90,42 @@ class EthereumNode {
   }
 
   /*Adds a peer node. If no node is given adds the bootnode*/
-  addPeer (bootnode) {
-    bootnode = bootnode || EthereumNetwork.getDefaultBootnode();
+  addPeer (node) {
+    node = node || EthereumNetwork.getDefaultBootnode();
     let defer = new Promise( (fufill, reject) => {
-      bootnode.getNodeInfo().then(([err, bootnodeInfo]) => {
-        this.web3.admin.addPeer(bootnodeInfo.enode, ()=>{
+      node.getNodeInfo().then(([err, nodeInfo]) => {
+        this.web3.admin.addPeer(nodeInfo.enode, ()=>{
           fufill();
         });
       });
     });
+    return defer;
+  }
 
+  /**
+  * Adds all the peers that have been created so far
+  */
+  addAllPeers () {
+    let addPeerPromises = [];
+
+    EthereumNetwork.getNodeIDs().forEach((nodeID) => {
+      let node = EthereumNetwork.getNodeByID(nodeID);
+      let defer = new Promise( (fufill, reject) => {
+        node.getNodeInfo().then(([err, nodeInfo]) => {
+          this.web3.admin.addPeer(nodeInfo.enode, ()=>{
+            fufill();
+          });
+        });
+      });
+
+      addPeerPromises.push(defer);
+    });
+
+    let defer = new Promise( (fufill, reject) => {
+      Promise.all(addPeerPromises).then( () => {
+        fufill();
+      });
+    });
     return defer;
   }
 

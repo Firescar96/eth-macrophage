@@ -61,6 +61,9 @@ var Home = React.createClass({
       });
     });
   },
+  addAllPeers () {
+    this.state.networkGraph.getSelectedNode().addAllPeers();
+  },
   sendMessage () {
     let selectedNode = this.state.networkGraph.getSelectedNode();
     selectedNode.sendTransaction({
@@ -96,6 +99,9 @@ var Home = React.createClass({
       </button>
       <button className="nodeAction" disabled>
       remove node
+      </button>
+      <button className="nodeAction" onClick={this.addAllPeers} disabled={!isNodeSelected}>
+      connect to peers
       </button>
       <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
       send message
