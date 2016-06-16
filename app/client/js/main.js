@@ -1,7 +1,7 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
 import {Home} from './Home.js';
 import {mount} from 'react-mounter';
-const NUM_GETH_INSTANCES = 3;
+const NUM_GETH_INSTANCES = 0;
 
 EthereumNetwork.createNode().then((bootnode) => {
   EthereumNetwork.setDefaultBootnode(bootnode);

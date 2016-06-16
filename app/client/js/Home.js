@@ -1,9 +1,10 @@
 import React from 'react';
 import {NetworkGraph} from './NetworkGraph.js';
+import {MessageGraph} from './MessageGraph.js';
 
 let navbar = (
   <nav>
-  <h1>Ethereum Macrophage</h1>
+    <h1>Ethereum Macrophage</h1>
   </nav>
 );
 
@@ -15,8 +16,8 @@ let NodeButton = React.createClass({
   render () {
     return (
       <button className="nodeReference"
-      onClick={this.onClick}>
-      {this.props.nodeID.substring(0, 10)}
+        onClick={this.onClick}>
+        {this.props.nodeID.substring(0, 10)}
       </button>
     );
   },
@@ -35,8 +36,9 @@ var Home = React.createClass({
   componentWillMount () {
     let updateNodes = function () {
       let nodeIDs = EthereumNetwork.getNodeIDs();
-      if(this.state.peerIDs.length != nodeIDs.length ||
-      this.state.peerIDs.some((v, i) => v.localeCompare(nodeIDs[i]) !== 0)) {
+      let existsDifferentNode = this.state.peerIDs
+      .some((v, i) => v.localeCompare(nodeIDs[i]) !== 0);
+      if(this.state.peerIDs.length != nodeIDs.length || existsDifferentNode) {
         this.setState({peerIDs: nodeIDs, shouldUpdateDOM: true});
       }else {
         this.setState({peerIDs: nodeIDs, shouldUpdateDOM: false});
@@ -84,30 +86,31 @@ var Home = React.createClass({
 
     return (
       <div>
-      {navbar}
+        {navbar}
 
-      <main>
-      <div id="nodeSidebar">
-      {nodeButtons}
-      </div>
+        <main>
+          <div id="nodeSidebar">
+            {nodeButtons}
+          </div>
 
-      <div id="graph"></div>
+          <div id="networkGraph" style={{display: 'none'}}></div>
+          <div id="messageGraph"></div>
 
-      <div id="actionSidebar">
-      <button className="nodeAction" onClick={this.addNode}>
-      add node
-      </button>
-      <button className="nodeAction" disabled>
-      remove node
-      </button>
-      <button className="nodeAction" onClick={this.addAllPeers} disabled={!isNodeSelected}>
-      connect to peers
-      </button>
-      <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
-      send message
-      </button>
-      </div>
-      </main>
+          <div id="actionSidebar">
+            <button className="nodeAction" onClick={this.addNode}>
+              add node
+            </button>
+            <button className="nodeAction" disabled>
+              remove node
+            </button>
+            <button className="nodeAction" onClick={this.addAllPeers} disabled={!isNodeSelected}>
+              connect to peers
+            </button>
+            <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
+              send message
+            </button>
+          </div>
+        </main>
 
       </div>
     );
@@ -117,7 +120,8 @@ var Home = React.createClass({
     graphData.nodes = [];
     graphData.links = [];
     this.setState({
-      networkGraph:    new NetworkGraph('#graph', graphData, this.forceUpdate.bind(this)),
+      networkGraph:    new NetworkGraph('#networkGraph', graphData, this.forceUpdate.bind(this)),
+      messageGraph:    new MessageGraph('#messageGraph', [], this.forceUpdate.bind(this)),
       shouldUpdateDOM: false,
     });
     this.updateGraphData();

@@ -63,7 +63,6 @@ class NetworkGraph {
       });
     });
     this.graphData.links.push(...newLinks);
-    return data;
   }
   _forceTick (e) {
     let node = this.nodesG.selectAll('circle.node').data(this.curNodesData, function (d) {
