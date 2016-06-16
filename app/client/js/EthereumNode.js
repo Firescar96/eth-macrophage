@@ -2,7 +2,8 @@ class EthereumNode {
 
   constructor (id) {
     this.id = id;
-    this.LogData = new Mongo.Collection('logdata' + id);
+    this.TxData = new Mongo.Collection('txdata' + id);
+    window.txdata = this.TxData;
     this.web3 = null;
     this.nodeID = '';
     this.filter = null;
@@ -48,7 +49,7 @@ class EthereumNode {
           this.defaultAccount = accounts[0];
 
           //have to make sure to subscribe after the record has been published on the server
-          Meteor.subscribe('logdata' + this.id);
+          Meteor.subscribe('txdata' + this.id);
           resolve(this);
         });
       }, 1000);
@@ -158,8 +159,8 @@ class EthereumNode {
     return defer;
   }
 
-  logFilter (callback) {
-    this.LogData.find({}).observeChanges({
+  txFilter (callback) {
+    this.TxData.find({}).observeChanges({
       added: (id, data) => {
         callback(this, data);
       },

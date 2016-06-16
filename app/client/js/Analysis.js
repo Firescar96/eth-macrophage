@@ -8,22 +8,22 @@ const MINIMUM_NETWORK_TIME = 1;
 class Analysis {
 
   constructor () {
-    this.payloadHashFrequency = {};
-    this.payloadHashMessages = {};
+    this.txHashFrequency = {};
+    this.txHashMessages = {};
 
     let ethereumNodes = EthereumNetwork.getNodeIDs().map((nodeID) => {
       return EthereumNetwork.getNodeByID(nodeID);
     });
     ethereumNodes.forEach((node) => {
-      this.payloadHashFrequency[node.nodeID] = {};
-      this.payloadHashMessages[node.nodeID] = {};
-      node.logFilter(this._update.bind(this));
+      this.txHashFrequency[node.nodeID] = {};
+      this.txHashMessages[node.nodeID] = {};
+      node.txFilter(this._update.bind(this));
     });
 
     EthereumNetwork.nodeFilter((node) => {
-      this.payloadHashFrequency[node.nodeID] = {};
-      this.payloadHashMessages[node.nodeID] = {};
-      node.logFilter(this._update.bind(this));
+      this.txHashFrequency[node.nodeID] = {};
+      this.txHashMessages[node.nodeID] = {};
+      node.txFilter(this._update.bind(this));
     });
   }
 
@@ -32,32 +32,33 @@ class Analysis {
       return;
     }
 
-    if(!this.payloadHashFrequency[targetNode.nodeID][message.payloadHash]) {
-      this.payloadHashFrequency[targetNode.nodeID][message.payloadHash] = 1;
+    if(!this.txHashFrequency[targetNode.nodeID][message.txHash]) {
+      this.txHashFrequency[targetNode.nodeID][message.txHash] = 1;
     }else {
-      this.payloadHashFrequency[targetNode.nodeID][message.payloadHash] += 1;
+      this.txHashFrequency[targetNode.nodeID][message.txHash] += 1;
     }
 
-    if(!this.payloadHashMessages[targetNode.nodeID][message.payloadHash]) {
-      this.payloadHashMessages[targetNode.nodeID][message.payloadHash] = [message];
+    if(!this.txHashMessages[targetNode.nodeID][message.txHash]) {
+      this.txHashMessages[targetNode.nodeID][message.txHash] = [message];
     }else {
-      this.payloadHashMessages[targetNode.nodeID][message.payloadHash].push(message);
+      this.txHashMessages[targetNode.nodeID][message.txHash].push(message);
     }
   }
 
   getPayloadHashFrequency () {
-    return this.payloadHashFrequency;
+    return this.txHashFrequency;
   }
 
+  //function needs to be updaed to new maps
   // getSortedPayloadHashFrequency () {
-  //   let payloadKeys = Object.keys(this.payloadHashFrequency);
+  //   let payloadKeys = Object.keys(this.txHashFrequency);
   //   payloadKeys.sort((a, b) => {
-  //     return this.payloadHashFrequency[b] - this.payloadHashFrequency[a];
+  //     return this.txHashFrequency[b] - this.txHashFrequency[a];
   //   });
   //   return payloadKeys.map((key) => {
   //     return {
   //       key:   key,
-  //       value: this.payloadHashFrequency[key],
+  //       value: this.txHashFrequency[key],
   //     };
   //   });
   // }
@@ -69,21 +70,25 @@ class Analysis {
   * @return {[json]}         a sorted array of json objects, one for each item
   */
   getSortedPayloadHashMessages (nodeID, message) {
-    let payloadItems = this.payloadHashMessages[nodeID][message];
+    let payloadItems = this.txHashMessages[nodeID][message];
     payloadItems.sort((a, b) => a.from.localeCompare(b.from));
 
     return payloadItems;
   }
 
   withEM () {
-    let sortedDataByNode = Object.keys(this.payloadHashMessages).map((targetNodeID) => {
-      let messageGroups =  Object.keys(this.payloadHashMessages[targetNodeID])
+    //it's very important to be able to handle missing data to work with
+    //sorted data
+    let sortedNodeIDs = EthereumNetwork.getNodeIDs().sort();
+
+    let sortedDataByNode = Object.keys(this.txHashMessages).map((targetNodeID) => {
+      let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
       //filter out messages that haven't been received from all known nodes
       .filter((hash) => {
-        let messageSenders = this.payloadHashMessages[targetNodeID][hash]
+        let messageSenders = this.txHashMessages[targetNodeID][hash]
         .map((message) => message.from);
 
-        return EthereumNetwork.getNodeIDs()
+        return sortedNodeIDs
         .filter((nodeID) => nodeID.localeCompare(targetNodeID) !== 0)
         .every((nodeID) => messageSenders.includes(nodeID));
       })
@@ -99,7 +104,9 @@ class Analysis {
       return data.messageGroups.length > 0;
     });
 
-    nonEmptyDataByNode.forEach((data) => {
+    console.log(nonEmptyDataByNode);
+
+    let posteriorProbabilities = nonEmptyDataByNode.map((data) => {
       console.log('running EM for', data.nodeID);
 
       //input data
@@ -109,9 +116,11 @@ class Analysis {
         });
       });
 
+      //TODO: evaluate whether it's okay to normalize all the points
+      //independently in this way
       X = X.map((point) => {
         let baselineX = Math.min(...point) - MINIMUM_NETWORK_TIME;
-        console.log(point.map((t) => t - baselineX));
+        //console.log(point.map((t) => t - baselineX));
         return point.map((t) => t - baselineX);
       });
       //simulated input data
@@ -140,16 +149,35 @@ class Analysis {
       //the cluster variance
       let sigmas = new Array(d).fill(0.5);
 
-      for(var i = 0; i < 5; i++) {
+      for(let i = 0; i < 5; i++) {
         //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
         [pjt, LL] = Analysis.estep(X, K, mus, partial, sigmas);
         [mus, partial, sigmas] = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
       }
       console.log('pjt', pjt);
       console.log('musig', partial, mus, sigmas);
+
+      let assignmentClusters = new Array(n).fill(0);
+      pjt.forEach((jt, j) => {
+        jt.forEach((prob, i) => {
+          assignmentClusters[i] = prob > pjt[assignmentClusters[i]][i] ? j : assignmentClusters[i];
+        });
+      });
+
+      let notMeNodeIDs = sortedNodeIDs.filter((nodeID) => nodeID.localeCompare(data.nodeID) !== 0);
+      let assignments = assignmentClusters.map((cluster, i) => {
+        return {
+          creator: notMeNodeIDs[cluster],
+          hash:    data.messageGroups[i][0].txHash,
+        };
+      });
+
+      return assignments;
     });
 
-    return nonEmptyDataByNode;
+
+
+    return posteriorProbabilities;
   }
 }
 
@@ -185,12 +213,8 @@ Analysis.estep = function (X, K, Mu, P, Sigma) {
       likelihoods.push(logScaledWeightedDensity);
     }
     let densityPrime = Math.max(...likelihoods); //logarithm magic follows
-    let eLikelihoods = likelihoods.map((density) => {
-      return Math.exp(density - densityPrime);
-    });
-    let shiftedSum = eLikelihoods.reduce((a, b) => {
-      return a + b;
-    });
+    let eLikelihoods = likelihoods.map((density) => Math.exp(density - densityPrime));
+    let shiftedSum = eLikelihoods.reduce((a, b) => a + b);
     let likelihoodsum = densityPrime + Math.log(shiftedSum);
     LL += likelihoodsum;
 
@@ -225,7 +249,6 @@ Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
       newmutotal.push(post[j][t]);
     });
 
-    console.log('newmu', newmu);
     newmu.forEach((mu, t) => {
       Mu[j][t] = mu / nj;
     });
@@ -238,7 +261,7 @@ Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
       }, 0);
       newsigma += post[j][t] * squaredDiff;
     });
-    console.log(newsigma, newsigma / (d * nj) ,Math.max(newsigma / (d * nj), minVariance));
+    //console.log(newsigma, newsigma / (d * nj) ,Math.max(newsigma / (d * nj), minVariance));
     Sigma[j] = Math.max(newsigma / (d * nj), minVariance);
   });
   return [Mu, P, Sigma];

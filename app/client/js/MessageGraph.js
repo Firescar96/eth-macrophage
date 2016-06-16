@@ -9,7 +9,7 @@ class MessageGraph {
   constructor (selection, data, updateDOM) {
     this._updateDOM = updateDOM;
     this.margin = {
-      top:    20,
+      top:    40,
       right:  40,
       bottom: 20,
       left:   50,
@@ -17,8 +17,10 @@ class MessageGraph {
     this.width = 660;
     this.height = 500;
     ///this.nodeColors = d3.scale.category20();
-    this.messageData = [{creator: 'asd', hash: 'asdfad'},{creator: 'asd', hash: 'asd'},{creator: 'gahh4d', hash: 'asd'}];
-    this._setupData(this.messageData);
+    this.messageData = [
+      {creator: 'placeholder data', hash: 'please?'},
+      {creator: 'run EM!', hash: 'pretty please?'}
+    ];
     this.svg = d3.select(selection)
     .append('svg')
     .attr('width', this.width)
@@ -30,9 +32,24 @@ class MessageGraph {
     .attr('height', this.height - this.margin.top - this.margin.bottom)
     .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')');
 
+    this.svg
+    .append('text')
+    .attr('class', 'x-label')
+    .attr('text-anchor', 'middle')
+    .attr('x', this.margin.right + (this.width - this.margin.left - this.margin.right) / 2)
+    .attr('y', this.margin.top / 2)
+    .text('Node Identifier');
+
+    this.svg
+    .append('text')
+    .attr('class', 'y-label')
+    .attr('text-anchor', 'middle')
+    .attr('x', -this.margin.top - (this.height - this.margin.top - this.margin.bottom) / 2)
+    .attr('y', this.margin.left / 2)
+    .attr('transform', 'rotate(-90)')
+    .text('Transaction Hash');
+
     this._update();
-  }
-  _setupData (data) {
   }
   _update () {
 
@@ -45,14 +62,16 @@ class MessageGraph {
     .tickSize(0);
     yAxis = d3.svg.axis().scale(y)
     .orient('left')
-    .tickSize(0);
+    .tickSize(0)
 
     var rectTransform = function (d) {
       return 'translate(' + x(d.creator) + ',' + y(d.hash) + ')';
     };
 
-    let rect = this.messagesG.selectAll('react')
+    this.messagesG.selectAll('rect').remove();
+    let rect = this.messagesG.selectAll('rect')
     .data(this.messageData);
+
 
     rect.enter()
     .append('rect')
@@ -88,33 +107,49 @@ class MessageGraph {
     .attr('width', (d) => x.rangeBand())
     .attr('height', (d) => y.rangeBand());
 
-    rect.exit().remove();
-
+    this.svg.select('.x-axis').remove();
     this.svg.append('g')
-    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')')
+    .attr('class', 'x-axis')
+    .attr('transform', 'translate(' + this.margin.top + ', ' + this.margin.top + ')')
     .transition()
     .call(xAxis);
 
+    this.svg.select('.y-axis').remove();
     this.svg.append('g')
-    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')')
+    .attr('class', 'y-axis')
+    .attr('transform', 'translate(' + this.margin.left + ', 0)')
     .transition()
-    .call(yAxis);
+    .call(yAxis)
+    .selectAll('text')
+    .attr('transform', 'rotate(-45)' );
 
   }
   setGraphData (newData) {
     this._setupData(newData);
     this._update();
   }
-  updateGraphData (newData) {
-    newData.forEach((_message) => {
-      if(!this.graphData.some((message) => {
-        let sameCreator = message.creator.localeCompare(_message.creator);
-        let sameHash =  message.hash.localeCompare(_message.hash);
+  updateData (newData) {
+    let flatData = newData
+    .reduce((a, b) => a.concat(b), [])
+    .map((data) => {
+      return {
+        creator: data.creator.substring(0, 10),
+        hash:    data.hash.substring(0, 10),
+      };
+    });
+
+    console.log(flatData);
+
+    flatData.forEach((_message) => {
+      if(!this.messageData.some((message) => {
+        let sameCreator = message.creator.localeCompare(_message.creator) === 0;
+        let sameHash =  message.hash.localeCompare(_message.hash) === 0;
         return sameCreator && sameHash;
       })) {
-        this.graphData.push(_message);
+        this.messageData.push(_message);
       }
     });
+
 
     this._update();
   }

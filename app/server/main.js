@@ -59,20 +59,24 @@ function createGethInstance () {
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
   gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
   gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
-  let LogData = new Mongo.Collection('logdata' + curNonce);
-  LogData.remove({});
-  Meteor.publish('logdata' + curNonce, () => {
-    return LogData.find({});
+  let TxData = new Mongo.Collection('txdata' + curNonce);
+  TxData.remove({});
+  Meteor.publish('txdata' + curNonce, () => {
+    return TxData.find({});
   });
 
   exec('mkdir ' + gethInstanceConfig.datadir);
+
+  //TODO: turn this callback into a promise
   exec('touch ' + gethInstanceConfig.logfile, Meteor.bindEnvironment(() => {
     let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
     logStream.on('data', Meteor.bindEnvironment( (data) => {
       let messages = /\{.*\}/.exec(data);
       if(!!messages && messages.length == 1) {
         let message = JSON.parse(messages[0]);
-        LogData.insert(message);
+        if(message.txHash) {
+          TxData.insert(message);
+        }
       }
     }));
   }));

@@ -1,6 +1,7 @@
 import React from 'react';
 import {NetworkGraph} from './NetworkGraph.js';
 import {MessageGraph} from './MessageGraph.js';
+import {analysis} from './Analysis.js';
 
 let navbar = (
   <nav>
@@ -44,7 +45,7 @@ var Home = React.createClass({
         this.setState({peerIDs: nodeIDs, shouldUpdateDOM: false});
       }
 
-      this.updateGraphData();
+      this.updateNetworkGraphData();
     };
     setInterval(updateNodes.bind(this), 1000);
   },
@@ -74,6 +75,9 @@ var Home = React.createClass({
       value: 1,
     });
   },
+  runEMAnalysis () {
+    this.state.messageGraph.updateData(analysis.withEM());
+  },
   shouldComponentUpdate (nextProps, nextState) {
     return nextState.shouldUpdateDOM;
   },
@@ -93,8 +97,10 @@ var Home = React.createClass({
             {nodeButtons}
           </div>
 
-          <div id="networkGraph" style={{display: 'none'}}></div>
-          <div id="messageGraph"></div>
+          <div id="graphs">
+            <div id="networkGraph"></div>
+            <div id="messageGraph"></div>
+          </div>
 
           <div id="actionSidebar">
             <button className="nodeAction" onClick={this.addNode}>
@@ -108,6 +114,9 @@ var Home = React.createClass({
             </button>
             <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
               send message
+            </button>
+            <button className="nodeAction" onClick={this.runEMAnalysis}>
+              run EM analysis
             </button>
           </div>
         </main>
@@ -124,9 +133,9 @@ var Home = React.createClass({
       messageGraph:    new MessageGraph('#messageGraph', [], this.forceUpdate.bind(this)),
       shouldUpdateDOM: false,
     });
-    this.updateGraphData();
+    this.updateNetworkGraphData();
   },
-  updateGraphData () {
+  updateNetworkGraphData () {
     let ethereumNodes = this.state.peerIDs.map((nodeID) => {
       return EthereumNetwork.getNodeByID(nodeID);
     });

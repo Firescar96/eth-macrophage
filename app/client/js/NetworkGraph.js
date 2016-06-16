@@ -15,7 +15,6 @@ class NetworkGraph {
     ///this.nodeColors = d3.scale.category20();
     this._selectedNode = null;
     this.graphData = {nodes: [], links: []};
-    this._setupData(this.graphData);
     let vis = d3.select(selection)
     .append('svg').attr('width', this.width)
     .attr('height', this.height);
@@ -28,41 +27,6 @@ class NetworkGraph {
     .linkDistance(200)
     .on('tick', this._forceTick.bind(this));
     this._update();
-  }
-  _setupData (data) {
-
-    let newNodes = data.nodes.map((nID) => {
-      let n = EthereumNetwork.getNodeByID(nID);
-      n.x = Math.floor(Math.random() * this.width);
-      n.y = Math.floor(Math.random() * this.height);
-      //TODO: scale radious based on number of peers
-      n.r = 5;
-      return n;
-    });
-    this.graphData.nodes.push(...newNodes);
-    //data.nodes = [...new Set(data.nodes)];
-    let newLinks = data.links.map((l) => {
-      //order statically to prevent duplicates
-      let source = l.source.localeCompare(l.target) > 0 ? l.source : l.target;
-      let target = l.source.localeCompare(l.target) > 0 ? l.target : l.source;
-      return {
-        source: EthereumNetwork.getNodeByID(source),
-        target: EthereumNetwork.getNodeByID(target),
-      };
-    });
-    newLinks.forEach((link1, i1, links1) => {
-      links1.some((link2, i2, links2) => {
-        if(i1 == i2) {
-          return false;
-        }
-        if(link1.source === link2.source && link1.target === link2.target) {
-          links1.splice(i2, 1);
-          return true;
-        }
-        return false;
-      });
-    });
-    this.graphData.links.push(...newLinks);
   }
   _forceTick (e) {
     let node = this.nodesG.selectAll('circle.node').data(this.curNodesData, function (d) {
@@ -139,7 +103,7 @@ class NetworkGraph {
     .call((d) => {
       if(d[0].length > 0) {
         d3.selectAll(d[0]).data().forEach( (ethereumNode) => {
-          ethereumNode.logFilter(this._messageListener.bind(this));
+          ethereumNode.txFilter(this._messageListener.bind(this));
         });
       }
     })
@@ -184,16 +148,16 @@ class NetworkGraph {
     this._updateLinks();
     this.force.start();
   }
-  setGraphData (newData) {
-    this._setupData(newData);
-    this._update();
-  }
   updateGraphData (newData) {
-    let graphData = {nodes: [], links: []};
+    if(!newData.nodes || !newData.links) {
+      return;
+    }
+
+    let filteredData = {nodes: [], links: []};
     newData.nodes.forEach((nodeID) => {
       let node = EthereumNetwork.getNodeByID(nodeID);
       if(!this.graphData.nodes.includes(node)) {
-        graphData.nodes.push(nodeID);
+        filteredData.nodes.push(nodeID);
       }
     });
 
@@ -206,11 +170,41 @@ class NetworkGraph {
         target.localeCompare(link2.target.nodeID) === 0;
       });
       if(!linkExists) {
-        graphData.links.push(link1);
+        filteredData.links.push(link1);
       }
     });
 
-    this._setupData(graphData);
+    let newNodes = filteredData.nodes.map((nID) => {
+      let n = EthereumNetwork.getNodeByID(nID);
+      n.x = Math.floor(Math.random() * this.width);
+      n.y = Math.floor(Math.random() * this.height);
+      //TODO: scale radious based on number of peers
+      n.r = 5;
+      return n;
+    });
+    this.graphData.nodes.push(...newNodes);
+    let newLinks = filteredData.links.map((l) => {
+      //order statically to prevent duplicates
+      let source = l.source.localeCompare(l.target) > 0 ? l.source : l.target;
+      let target = l.source.localeCompare(l.target) > 0 ? l.target : l.source;
+      return {
+        source: EthereumNetwork.getNodeByID(source),
+        target: EthereumNetwork.getNodeByID(target),
+      };
+    });
+    newLinks.forEach((link1, i1, links1) => {
+      links1.some((link2, i2, links2) => {
+        if(i1 == i2) {
+          return false;
+        }
+        if(link1.source === link2.source && link1.target === link2.target) {
+          links1.splice(i2, 1);
+          return true;
+        }
+        return false;
+      });
+    });
+    this.graphData.links.push(...newLinks);
 
     this._update();
   }
