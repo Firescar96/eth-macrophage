@@ -1,5 +1,3 @@
-import {EthereumNetwork} from './EthereumNetwork.js';
-
 class MessageGraph {
   /*
   selection: html element in which to inset the graph
@@ -12,14 +10,14 @@ class MessageGraph {
       top:    40,
       right:  40,
       bottom: 20,
-      left:   50,
+      left:   100,
     };
     this.width = 660;
     this.height = 500;
     ///this.nodeColors = d3.scale.category20();
     this.messageData = [
       {creator: 'placeholder data', hash: 'please?'},
-      {creator: 'run EM!', hash: 'pretty please?'}
+      {creator: 'run EM!', hash: 'pretty please?'},
     ];
     this.svg = d3.select(selection)
     .append('svg')
@@ -32,20 +30,20 @@ class MessageGraph {
     .attr('height', this.height - this.margin.top - this.margin.bottom)
     .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')');
 
-    this.svg
+    this.messagesG
     .append('text')
     .attr('class', 'x-label')
     .attr('text-anchor', 'middle')
     .attr('x', this.margin.right + (this.width - this.margin.left - this.margin.right) / 2)
-    .attr('y', this.margin.top / 2)
+    .attr('y', -this.margin.top / 2)
     .text('Node Identifier');
 
-    this.svg
+    this.messagesG
     .append('text')
     .attr('class', 'y-label')
     .attr('text-anchor', 'middle')
     .attr('x', -this.margin.top - (this.height - this.margin.top - this.margin.bottom) / 2)
-    .attr('y', this.margin.left / 2)
+    .attr('y', -this.margin.left / 4)
     .attr('transform', 'rotate(-90)')
     .text('Transaction Hash');
 
@@ -54,15 +52,15 @@ class MessageGraph {
   _update () {
 
     x = d3.scale.ordinal().domain(this.messageData.map((data) => data.creator))
-    .rangeRoundBands([0, this.width - this.margin.left - this.margin.right], 0.1);
+    .rangeRoundBands([this.margin.left, this.width - this.margin.left - this.margin.right], 0.1);
     y = d3.scale.ordinal().domain(this.messageData.map((data) => data.hash))
-    .rangeRoundBands([0, this.height - this.margin.top - this.margin.bottom], 0.1);
+    .rangeRoundBands([this.margin.top, this.height - this.margin.top - this.margin.bottom], 0.1);
     xAxis = d3.svg.axis().scale(x).orient('top')
     .tickSubdivide(true)
     .tickSize(0);
     yAxis = d3.svg.axis().scale(y)
     .orient('left')
-    .tickSize(0)
+    .tickSize(0);
 
     var rectTransform = function (d) {
       return 'translate(' + x(d.creator) + ',' + y(d.hash) + ')';
@@ -107,21 +105,21 @@ class MessageGraph {
     .attr('width', (d) => x.rangeBand())
     .attr('height', (d) => y.rangeBand());
 
-    this.svg.select('.x-axis').remove();
-    this.svg.append('g')
+    this.messagesG.select('.x-axis').remove();
+    this.messagesG.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', 'translate(' + this.margin.top + ', ' + this.margin.top + ')')
+    .attr('transform', 'translate(0, ' + this.margin.top/2 + ')')
     .transition()
-    .call(xAxis);
+    .call(xAxis)
+    .selectAll('text')
+    .attr('transform', 'rotate(-20)');
 
-    this.svg.select('.y-axis').remove();
-    this.svg.append('g')
+    this.messagesG.select('.y-axis').remove();
+    this.messagesG.append('g')
     .attr('class', 'y-axis')
     .attr('transform', 'translate(' + this.margin.left + ', 0)')
     .transition()
-    .call(yAxis)
-    .selectAll('text')
-    .attr('transform', 'rotate(-45)' );
+    .call(yAxis);
 
   }
   setGraphData (newData) {
@@ -138,9 +136,8 @@ class MessageGraph {
       };
     });
 
-    console.log(flatData);
-
-    flatData.forEach((_message) => {
+    this.messageData = flatData;
+    /*flatData.forEach((_message) => {
       if(!this.messageData.some((message) => {
         let sameCreator = message.creator.localeCompare(_message.creator) === 0;
         let sameHash =  message.hash.localeCompare(_message.hash) === 0;
@@ -148,7 +145,7 @@ class MessageGraph {
       })) {
         this.messageData.push(_message);
       }
-    });
+    });*/
 
 
     this._update();

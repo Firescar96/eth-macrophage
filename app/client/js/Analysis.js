@@ -11,10 +11,10 @@ class Analysis {
     this.txHashFrequency = {};
     this.txHashMessages = {};
 
-    let ethereumNodes = EthereumNetwork.getNodeIDs().map((nodeID) => {
+    EthereumNetwork.getNodeIDs().map((nodeID) => {
       return EthereumNetwork.getNodeByID(nodeID);
-    });
-    ethereumNodes.forEach((node) => {
+    })
+    .forEach((node) => {
       this.txHashFrequency[node.nodeID] = {};
       this.txHashMessages[node.nodeID] = {};
       node.txFilter(this._update.bind(this));
@@ -45,23 +45,41 @@ class Analysis {
     }
   }
 
+  reset () {
+    Object.keys(this.txHashFrequency).forEach((nodeID) => {
+      this.txHashFrequency[nodeID] = {};
+    });
+    Object.keys(this.txHashMessages).forEach((nodeID) => {
+      this.txHashMessages[nodeID] = {};
+    });
+
+    EthereumNetwork.getNodeIDs().map((nodeID) => {
+      return EthereumNetwork.getNodeByID(nodeID);
+    })
+    .forEach((node) => {
+      node.TxData.find().fetch().forEach((tx) => {
+        node.TxData.remove(tx._id);
+      });
+    });
+  }
+
   getPayloadHashFrequency () {
     return this.txHashFrequency;
   }
 
   //function needs to be updaed to new maps
-  // getSortedPayloadHashFrequency () {
-  //   let payloadKeys = Object.keys(this.txHashFrequency);
-  //   payloadKeys.sort((a, b) => {
-  //     return this.txHashFrequency[b] - this.txHashFrequency[a];
-  //   });
-  //   return payloadKeys.map((key) => {
-  //     return {
-  //       key:   key,
-  //       value: this.txHashFrequency[key],
-  //     };
-  //   });
-  // }
+  /*getSortedPayloadHashFrequency () {
+  let payloadKeys = Object.keys(this.txHashFrequency);
+  payloadKeys.sort((a, b) => {
+  return this.txHashFrequency[b] - this.txHashFrequency[a];
+  });
+  return payloadKeys.map((key) => {
+  return {
+  key:   key,
+  value: this.txHashFrequency[key],
+  };
+  });
+  }*/
 
   /**
   * Call this to ensure the same order is used everytime
@@ -70,10 +88,10 @@ class Analysis {
   * @return {[json]}         a sorted array of json objects, one for each item
   */
   getSortedPayloadHashMessages (nodeID, message) {
-    let payloadItems = this.txHashMessages[nodeID][message];
-    payloadItems.sort((a, b) => a.from.localeCompare(b.from));
+    let items = this.txHashMessages[nodeID][message];
+    items.sort((a, b) => a.from.localeCompare(b.from));
 
-    return payloadItems;
+    return items;
   }
 
   withEM () {
@@ -85,12 +103,8 @@ class Analysis {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
       //filter out messages that haven't been received from all known nodes
       .filter((hash) => {
-        let messageSenders = this.txHashMessages[targetNodeID][hash]
-        .map((message) => message.from);
-
         return sortedNodeIDs
-        .filter((nodeID) => nodeID.localeCompare(targetNodeID) !== 0)
-        .every((nodeID) => messageSenders.includes(nodeID));
+        .filter((nodeID) => nodeID.localeCompare(targetNodeID) !== 0);
       })
       .map((message) => this.getSortedPayloadHashMessages(targetNodeID, message));
 
@@ -104,31 +118,37 @@ class Analysis {
       return data.messageGroups.length > 0;
     });
 
-    console.log(nonEmptyDataByNode);
-
     let posteriorProbabilities = nonEmptyDataByNode.map((data) => {
       console.log('running EM for', data.nodeID);
 
       //input data
       let X = data.messageGroups.map((messageGroup) => {
-        return messageGroup.map((message) => {
-          return Date.parse(message.time);
+        return sortedNodeIDs.map((nodeID) => {
+          let time = null;
+          messageGroup.forEach((message) => {
+            if(message.from.localeCompare(nodeID) === 0) {
+              time = Date.parse(message.time);
+            }
+          });
+          return time;
         });
       });
 
       //TODO: evaluate whether it's okay to normalize all the points
       //independently in this way
       X = X.map((point) => {
-        let baselineX = Math.min(...point) - MINIMUM_NETWORK_TIME;
-        //console.log(point.map((t) => t - baselineX));
-        return point.map((t) => t - baselineX);
+        let baselineX = Math.min(...point.filter((p) => p)) - MINIMUM_NETWORK_TIME;
+        return point.map((t) => {
+          return t ? t - baselineX : null;
+        });
       });
+      console.log(X);
       //simulated input data
       //let X = [[1, 0.5, 0], [0.5, 1, 0], [1, 2, .2], [0.5, 1, 0], [0.2, 1, 0], [1, 0.2, 0]];
 
       //helper defnitions
       let n = X.length;
-      let d = X[0].length;
+      let d = sortedNodeIDs.length;
 
       //*these are tunable parameters*
       //initial mixing probability
@@ -141,7 +161,7 @@ class Analysis {
       //cluster defnition parameters, *these can be tuned as desired*
       //the initial mean of the cluster, currently defined as along one axis
       let mus = new Array(d).fill(1).map((mu, i) => {
-        mu = new Array(d).fill(1);
+        mu = new Array(d).fill(500);
         mu[i] = 0;
         return mu;
       });
@@ -149,7 +169,11 @@ class Analysis {
       //the cluster variance
       let sigmas = new Array(d).fill(0.5);
 
-      for(let i = 0; i < 5; i++) {
+      let LL = 0.0;
+      let oldLL = 1.0;  //the LogLikelihood
+
+      while(Math.abs(LL - oldLL) > (Math.pow(10, -6) * Math.abs(LL))) {
+        oldLL = LL;
         //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
         [pjt, LL] = Analysis.estep(X, K, mus, partial, sigmas);
         [mus, partial, sigmas] = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
@@ -164,10 +188,9 @@ class Analysis {
         });
       });
 
-      let notMeNodeIDs = sortedNodeIDs.filter((nodeID) => nodeID.localeCompare(data.nodeID) !== 0);
       let assignments = assignmentClusters.map((cluster, i) => {
         return {
-          creator: notMeNodeIDs[cluster],
+          creator: sortedNodeIDs[cluster],
           hash:    data.messageGroups[i][0].txHash,
         };
       });
@@ -200,14 +223,14 @@ Analysis.estep = function (X, K, Mu, P, Sigma) {
   for(let i = 0; i < K; i++) {
     post.push(new Array(n).fill(0));
   }
-  /*(function (_post) {
-  console.log(n, K, _post);
-  })(post);
-  */
+
   X.forEach((x, t) => {
+    let delta = x.map((x0) => x0 ? 1 : 0);
+    x = x.filter((x0, e) => delta[e] == 1);
+
     let likelihoods = [];
     for(let j = 0; j < K; j++) {
-      let mu = Mu[j];
+      let mu = Mu[j].filter((x0, e) => delta[e] == 1);
       let sigma = Sigma[j];
       let logScaledWeightedDensity = Math.log(P[j]) + Analysis.logN(x, mu, sigma);
       likelihoods.push(logScaledWeightedDensity);
@@ -219,7 +242,7 @@ Analysis.estep = function (X, K, Mu, P, Sigma) {
     LL += likelihoodsum;
 
     for(let j = 0; j < K; j++) {
-      let mu = Mu[j];
+      let mu = Mu[j].filter((x0, e) => delta[e] == 1);
       let sigma = Sigma[j];
       let logScaledWeightedDensity = Math.log(P[j]) + Analysis.logN(x, mu, sigma);
       post[j][t] = Math.exp(logScaledWeightedDensity - likelihoodsum);
@@ -234,35 +257,43 @@ Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
 
   P.forEach((p, j) => {
 
-    let nj = post[j].reduce((a, b) => {
-      return a + b;
-    });
+    let nj = post[j].reduce((a, b) => a + b);
 
     P[j] = nj / n;
 
-    newmu = new Array(d).fill(0);
-    newmutotal = [];
+    let newmu = new Array(n).fill(1).map((mu, i) => {
+      return new Array(d).fill(0);
+    });
+    let newmutotal = [];
     X.forEach((x, t) => {
+      let delta = x.map((x0) => x0 ? 1 : 0);
       x.forEach((x0, i) => {
-        newmu[i] += x0 * post[j][t];
+        newmu[t][i] += delta[i] * x0 * post[j][t];
       });
-      newmutotal.push(post[j][t]);
+      newmutotal = newmutotal.map((mu, i) => delta[i] * post[j][t]);
     });
 
-    newmu.forEach((mu, t) => {
-      Mu[j][t] = mu / nj;
+    newmutotal.forEach((total, t) => {
+      Mu[j][t] = newmu[t].map((mu, i) => mu / total);
     });
 
     let newsigma = 0;
+    let newsigmatotal = 0;
     X.forEach((x, t) => {
-      let mu = Mu[j];
+      let delta = x.map((x0) => x0 ? 1 : 0);
+      x = x.map((x0, e) => {
+        return x0 ? x0 * delta[e] : delta[e];
+      });
+      let mu = Mu[j].map((x0, e) => x0 * delta[e]);
       let squaredDiff = x.reduce((x0, x1, i1) => {
         return x0 + Math.pow((x1 - mu[i1]), 2);
       }, 0);
+
       newsigma += post[j][t] * squaredDiff;
+      let deltasize = delta.filter((e) => e !== 0).length;
+      newsigmatotal += deltasize * post[j][t];
     });
-    //console.log(newsigma, newsigma / (d * nj) ,Math.max(newsigma / (d * nj), minVariance));
-    Sigma[j] = Math.max(newsigma / (d * nj), minVariance);
+    Sigma[j] = Math.max(newsigma / newsigmatotal || minVariance, minVariance);
   });
   return [Mu, P, Sigma];
 };
