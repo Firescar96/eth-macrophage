@@ -1,8 +1,14 @@
 class MessageGraph {
   /*
-  selection: html element in which to inset the graph
-  data: JSON object of the graph data
-  updateDOM: function that will triger updates to the containing DOM
+  selection:
+  data:
+  updateDOM:
+  */
+ /**
+  * [constructor description]
+  * @param  {string} selection    html element in which to inset the graph
+  * @param  {json} data           JSON object of the graph data
+  * @param  {Function} updateDOM  function that will triger updates to the containing DOM
   */
   constructor (selection, data, updateDOM) {
     this._updateDOM = updateDOM;
@@ -14,7 +20,7 @@ class MessageGraph {
     };
     this.width = 660;
     this.height = 500;
-    ///this.nodeColors = d3.scale.category20();
+
     this.messageData = [
       {creator: 'placeholder data', hash: 'please?'},
       {creator: 'run EM!', hash: 'pretty please?'},
@@ -49,6 +55,7 @@ class MessageGraph {
 
     this._update();
   }
+
   _update () {
 
     x = d3.scale.ordinal().domain(this.messageData.map((data) => data.creator))
@@ -108,7 +115,7 @@ class MessageGraph {
     this.messagesG.select('.x-axis').remove();
     this.messagesG.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', 'translate(0, ' + this.margin.top/2 + ')')
+    .attr('transform', 'translate(0, ' + this.margin.top / 2 + ')')
     .transition()
     .call(xAxis)
     .selectAll('text')
@@ -122,10 +129,11 @@ class MessageGraph {
     .call(yAxis);
 
   }
-  setGraphData (newData) {
-    this._setupData(newData);
-    this._update();
-  }
+
+  /**
+   * call this with new data from the analysis for the visualization
+   * @param  {json} newData
+   */
   updateData (newData) {
     let flatData = newData
     .reduce((a, b) => a.concat(b), [])
@@ -137,16 +145,6 @@ class MessageGraph {
     });
 
     this.messageData = flatData;
-    /*flatData.forEach((_message) => {
-      if(!this.messageData.some((message) => {
-        let sameCreator = message.creator.localeCompare(_message.creator) === 0;
-        let sameHash =  message.hash.localeCompare(_message.hash) === 0;
-        return sameCreator && sameHash;
-      })) {
-        this.messageData.push(_message);
-      }
-    });*/
-
 
     this._update();
   }

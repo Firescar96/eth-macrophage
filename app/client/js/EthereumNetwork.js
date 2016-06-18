@@ -1,5 +1,6 @@
 class EthereumNetwork {}
 
+//using multiple data structures to store nodeIDs for better lookup
 EthereumNetwork._members = {};
 EthereumNetwork._nodeIDCollection = new Mongo.Collection('networkMemberIDs');
 Meteor.subscribe('networkMemberIDs', () => {
@@ -10,18 +11,30 @@ Meteor.subscribe('networkMemberIDs', () => {
 
 EthereumNetwork._defaultBootnode;
 EthereumNetwork._currentNonce = 0;
-//TODO: key this by id not port, but atm port is readily available
+
+/**
+ * get an array of all node IDs
+ * @return {[string]}
+ */
 EthereumNetwork.getNodeIDs = function () {
   return Object.keys(EthereumNetwork._members);
 };
 
-//TODO: key this by id not port, but atm port is readily available
+/**
+ * get a singular EthereumNode
+ * @param  {string} id
+ * @return {EthereumNode}
+ */
 EthereumNetwork.getNodeByID = function (id) {
   return EthereumNetwork._members[id];
 };
 
+/**
+ * Does the work of creating an EthereumNode and fufils the Promise with
+ * the node when complete
+ * @return {Promise}
+ */
 EthereumNetwork.createNode = function () {
-  //TODO put this increment in a lock
   let currentNonce = EthereumNetwork._currentNonce++;
   let defer = new Promise((resolve, reject) => {
     let newNode = new EthereumNode(currentNonce);
@@ -43,6 +56,9 @@ EthereumNetwork.createNode = function () {
   return defer;
 };
 
+/**
+ * @param {EthereumNode} node
+ */
 EthereumNetwork.addNode = function (node) {
   if(EthereumNetwork._members[node.nodeID]) {
     return;
@@ -51,13 +67,24 @@ EthereumNetwork.addNode = function (node) {
   EthereumNetwork._nodeIDCollection.insert({id: node.nodeID});
 };
 
+/**
+ * @param {EthereumNode} bootnode
+ */
 EthereumNetwork.setDefaultBootnode = function (bootnode) {
   EthereumNetwork._defaultBootnode = bootnode;
 };
-EthereumNetwork.getDefaultBootnode = function (bootnode) {
+
+/**
+ * @return {EthereumNode}
+ */
+EthereumNetwork.getDefaultBootnode = function () {
   return EthereumNetwork._defaultBootnode;
 };
 
+/**
+ * Provide a callback to be invoked whenever a new node is created
+ * @param  {Function} callback(theNewNode)
+ */
 EthereumNetwork.nodeFilter = function (callback) {
   EthereumNetwork._nodeIDCollection.find().observeChanges({
     added: (id, data) => {

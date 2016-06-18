@@ -1,5 +1,16 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
+
+const spawn = Npm.require('child_process').spawn;
+const exec = Npm.require('child_process').exec;
+
+const tailStream = require('tail-stream');
+
+const GETH_BASE_PORT = 21000;
+const GETH_BASE_RPCPORT = 22000;
+const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
+
+//have to publish this so the client can use it
 let _NetworkMemberIDs = new Mongo.Collection('networkMemberIDs');
 Meteor.publish('networkMemberIDs', () => {
   return _NetworkMemberIDs.find({});
@@ -16,16 +27,7 @@ _NetworkMemberIDs.allow({
   },
 });
 
-
-const spawn = Npm.require('child_process').spawn;
-const exec = Npm.require('child_process').exec;
-
-var tailStream = require('tail-stream');
-
-const GETH_BASE_PORT = 21000;
-const GETH_BASE_RPCPORT = 22000;
-const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
-
+//tracks how many instances have been created so far
 let curNonceState = 0;
 
 exec('mkdir ' + GETH_BASE_DATADIR);
@@ -47,6 +49,10 @@ var gethConfig = {
   bootnodes:     '""',
 };
 
+/**
+ * creates a new geth node and increments the curNonceState
+ * @return undefined
+ */
 function createGethInstance () {
   let curNonce = curNonceState;
   //need an instance so the callback below will use this version and not changes
@@ -59,6 +65,8 @@ function createGethInstance () {
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
   gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
   gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
+
+  //this database is used on the client to get this node's received txs
   let TxData = new Mongo.Collection('txdata' + curNonce);
   TxData.remove({});
   Meteor.publish('txdata' + curNonce, () => {

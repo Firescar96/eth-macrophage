@@ -28,6 +28,7 @@ class NetworkGraph {
     .on('tick', this._forceTick.bind(this));
     this._update();
   }
+
   _forceTick (e) {
     let node = this.nodesG.selectAll('circle.node').data(this.curNodesData, function (d) {
       return d.nodeID;
@@ -47,6 +48,7 @@ class NetworkGraph {
     .attr('x2', (d) => { return d.target.x; })
     .attr('y2', (d) => { return d.target.y; });
   }
+
   _messageListener (targetNode, message) {
     if(!EthereumNetwork.getNodeIDs().includes(message.from)) {
       return;
@@ -92,6 +94,7 @@ class NetworkGraph {
       .remove();
     });
   }
+
   _updateNodes () {
     let node = this.nodesG.selectAll('circle.node')
     .data(this.curNodesData, function (d) {
@@ -124,6 +127,7 @@ class NetworkGraph {
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);
     node.exit().remove();
   }
+
   _updateLinks () {
     let link = this.linksG.selectAll('line.link').data(this.curLinksData, function (d) {
       return d.source.nodeID + '_' + d.target.nodeID;
@@ -138,6 +142,7 @@ class NetworkGraph {
     .attr('y2', (d) => { return d.target.y; });
     link.exit().remove();
   }
+
   _update () {
     this.curNodesData = this.graphData.nodes;
     this.curLinksData = this.graphData.links;
@@ -148,6 +153,11 @@ class NetworkGraph {
     this._updateLinks();
     this.force.start();
   }
+
+  /**
+   * call this with new data for the visualization
+   * @param  {json} newData
+   */
   updateGraphData (newData) {
     if(!newData.nodes || !newData.links) {
       return;
@@ -208,12 +218,14 @@ class NetworkGraph {
 
     this._update();
   }
+
   getSelectedNode () {
     if(!this._selectedNode) {
       return null;
     }
     return this._selectedNode.data()[0];
   }
+
   setSelectedNode (selectedNodeID) {
     this.nodesG.selectAll('circle.node').attr('fill', '#000');
     this._selectedNode = this.nodesG.selectAll('circle.node')

@@ -10,6 +10,12 @@ class EthereumNode {
     this.defaultAccount = null;
   }
 
+  /**
+   * use this function to establish a connection for a node to web3,
+   * when the connection is established the promise if fufilled
+   * @param  {int} port
+   * @return {Promise}
+   */
   initializeConnection (port) {
     let web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:' + port));
     web3._extend({
@@ -32,7 +38,7 @@ class EthereumNode {
 
     let defer = new Promise( (resolve, reject) => {
       let nodeInfoTimer = setInterval(() => {
-        this.becomeConnected()
+        this.getListening()
         .then( ([err, connected]) => {
           if(connected) {
             clearInterval(nodeInfoTimer);
@@ -60,7 +66,7 @@ class EthereumNode {
     return defer;
   }
 
-  becomeConnected () {
+  getListening () {
     let defer = new Promise((resolve, reject) => {
       this.web3.net.getListening( (err, listening) => {
         resolve([err, listening]);
@@ -111,13 +117,7 @@ class EthereumNode {
 
     EthereumNetwork.getNodeIDs().forEach((nodeID) => {
       let node = EthereumNetwork.getNodeByID(nodeID);
-      let defer = new Promise( (fufill, reject) => {
-        node.getNodeInfo().then(([err, nodeInfo]) => {
-          this.web3.admin.addPeer(nodeInfo.enode, ()=>{
-            fufill();
-          });
-        });
-      });
+      let defer = this.addPeer(node);
 
       addPeerPromises.push(defer);
     });
@@ -159,6 +159,10 @@ class EthereumNode {
     return defer;
   }
 
+  /**
+   * use this to setup a callback to listen for new transactions
+   * @param  {Function} callback(this, theData)
+   */
   txFilter (callback) {
     this.TxData.find({}).observeChanges({
       added: (id, data) => {
