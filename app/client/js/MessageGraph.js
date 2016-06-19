@@ -21,10 +21,7 @@ class MessageGraph {
     this.width = 660;
     this.height = 500;
 
-    this.messageData = [
-      {creator: 'placeholder data', hash: 'please?'},
-      {creator: 'run EM!', hash: 'pretty please?'},
-    ];
+    this.messageData = [];
     this.svg = d3.select(selection)
     .append('svg')
     .attr('width', this.width)
@@ -57,10 +54,17 @@ class MessageGraph {
   }
 
   _update () {
+    let uniqueCreators = this.messageData
+    .map((data) => data.creator)
+    .unique();
 
-    x = d3.scale.ordinal().domain(this.messageData.map((data) => data.creator))
+    let uniqueHashes = this.messageData
+    .map((data) => data.hash)
+    .unique();
+
+    x = d3.scale.ordinal().domain(uniqueCreators)
     .rangeRoundBands([this.margin.left, this.width - this.margin.left - this.margin.right], 0.1);
-    y = d3.scale.ordinal().domain(this.messageData.map((data) => data.hash))
+    y = d3.scale.ordinal().domain(uniqueHashes)
     .rangeRoundBands([this.margin.top, this.height - this.margin.top - this.margin.bottom], 0.1);
     xAxis = d3.svg.axis().scale(x).orient('top')
     .tickSubdivide(true)
@@ -86,6 +90,7 @@ class MessageGraph {
     .attr('transform', rectTransform)
     .attr('width', (d) => x.rangeBand())
     .attr('height', (d) => y.rangeBand())
+    .attr('fill-opacity', (d) => d.prob / uniqueCreators.length)
     .append('text')
     .text((d) => d.hash)
     /*.on('mouseover', function(e){
@@ -139,12 +144,15 @@ class MessageGraph {
     .reduce((a, b) => a.concat(b), [])
     .map((data) => {
       return {
-        creator: data.creator.substring(0, 10),
-        hash:    data.hash.substring(0, 10),
+        assignor: data.assignor,
+        creator:  data.creator.substring(0, 10),
+        hash:     data.hash.substring(0, 10),
+        prob:     data.prob,
       };
     });
 
     this.messageData = flatData;
+    //console.log(flatData);
 
     this._update();
   }

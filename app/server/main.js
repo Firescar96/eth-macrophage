@@ -34,25 +34,26 @@ exec('mkdir ' + GETH_BASE_DATADIR);
 
 //base configuration for a geth instance
 var gethConfig = {
+  bootnodes:     '""',
   datadir:       GETH_BASE_DATADIR,
+  genesis:       Assets.absoluteFilePath('genesis.json'),
   logfile:       'log.log',
+  minerthreads:  1,
+  maxpeers:      25,
+  networkid:     35742222,
+  password:      Assets.absoluteFilePath('password'),
   port:          GETH_BASE_PORT,
   rpc:           true,
   rpcport:       GETH_BASE_RPCPORT,
   rpcaddr:       '127.0.0.1',
   rpcapi:        'admin,web3,eth,net',
-  networkid:     35742222,
   rpccorsdomain: 'http://127.0.0.1:3000, http://localhost:3000',
-  minerthreads:  1,
-  genesis:       Assets.absoluteFilePath('genesis.json'),
-  password:      Assets.absoluteFilePath('password'),
-  bootnodes:     '""',
 };
 
 /**
- * creates a new geth node and increments the curNonceState
- * @return undefined
- */
+* creates a new geth node and increments the curNonceState
+* @return undefined
+*/
 function createGethInstance () {
   let curNonce = curNonceState;
   //need an instance so the callback below will use this version and not changes
@@ -100,7 +101,7 @@ function createGethInstance () {
       gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
       '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
       '--password=' + gethInstanceConfig.password, '--bootnodes=' + gethInstanceConfig.bootnodes,
-      'js', Assets.absoluteFilePath('mine.js')]);
+      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', Assets.absoluteFilePath('mine.js')]);
 
       //For some reason geth flips the out and err output..or something
       cmd.stdout.on('data', (data) => {

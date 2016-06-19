@@ -117,7 +117,7 @@ class Analysis {
     })
     //after cleaning the data into a computable format, let's do some computation
     .map((data) => {
-      console.log('running EM for', data.nodeID);
+      //console.log('running EM for', data.nodeID);
 
       //input data converted from the messages into numbers
       let X = data.messageGroups.map((messageGroup) => {
@@ -138,7 +138,7 @@ class Analysis {
       X = X.map((point) => {
         let baselineX = Math.min(...point.filter((p) => p)) - MINIMUM_NETWORK_TIME;
         return point.map((t) => {
-          return t ? t - baselineX : null;
+          return t ? t / baselineX : null;
         });
       });
       //simulated input data
@@ -171,28 +171,34 @@ class Analysis {
       let LL = 0.0;
       let oldLL = 1.0;
 
-      while(Math.abs(LL - oldLL) > (Math.pow(10, -6) * Math.abs(LL))) {
+      while(Math.abs(LL - oldLL) > (Math.pow(10, -4) * Math.abs(LL))) {
         oldLL = LL;
         //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
         [pjt, LL] = Analysis.estep(X, K, mus, partial, sigmas);
         [mus, partial, sigmas] = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
       }
-      console.log('pjt', pjt);
-      console.log('musig', partial, mus, sigmas);
+      //console.log('pjt', pjt);
+      //console.log('musig', partial, mus, sigmas);
 
       //find the softmax of the assignments
-      let assignmentClusters = new Array(n).fill(0);
+      //removed in favor of sending all the data
+      /*let assignmentClusters = new Array(n).fill(0);
       pjt.forEach((jt, j) => {
         jt.forEach((prob, i) => {
           assignmentClusters[i] = prob > pjt[assignmentClusters[i]][i] ? j : assignmentClusters[i];
         });
-      });
+      });*/
 
-      let assignments = assignmentClusters.map((cluster, i) => {
-        return {
-          creator: sortedNodeIDs[cluster],
-          hash:    data.messageGroups[i][0].txHash,
-        };
+      let assignments = [];
+      pjt.forEach((jt, j) => {
+        jt.forEach((prob, i) => {
+          assignments.push({
+            assignor: data.nodeID,
+            creator:  sortedNodeIDs[j],
+            hash:     data.messageGroups[i][0].txHash,
+            prob:     prob,
+          });
+        });
       });
 
       return assignments;
