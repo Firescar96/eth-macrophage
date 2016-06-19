@@ -6,12 +6,13 @@ import {EthereumNetwork} from './EthereumNetwork.js';
 const MINIMUM_NETWORK_TIME = 1;
 
 /**
- *This class constains all the function available to do an Eth-Macrophage
- *analysis on the EthereumNetwork
- */
+*This class constains all the function available to do an Eth-Macrophage
+*analysis on the EthereumNetwork
+*/
 class Analysis {
 
   constructor () {
+    this.networkGraph = null;
     this.txHashFrequency = {};
     this.txHashMessages = {};
 
@@ -29,6 +30,9 @@ class Analysis {
       this.txHashMessages[node.nodeID] = {};
       node.txFilter(this._update.bind(this));
     });
+  }
+  setNetworkGraph (graph) {
+    this.networkGraph = graph;
   }
 
   _update (targetNode, message) {
@@ -50,8 +54,8 @@ class Analysis {
   }
 
   /**
-   * reset (clear) the storage maps and the collection of txs
-   */
+  * reset (clear) the storage maps and the collection of txs
+  */
   reset () {
     Object.keys(this.txHashFrequency).forEach((nodeID) => {
       this.txHashFrequency[nodeID] = {};
@@ -80,31 +84,39 @@ class Analysis {
   * @param  {string} message
   * @return {[json]}         a sorted array of json objects, one for each message
   */
-  getSortedPayloadHashMessages (nodeID, message) {
-    let items = this.txHashMessages[nodeID][message];
+ /*
+  getSortedTxHashMessages (nodeID, hash) {
+    let items = this.txHashMessages[nodeID][hash];
     items.sort((a, b) => a.from.localeCompare(b.from));
 
     return items;
-  }
+  }*/
 
   /**
-   * run the Expectation Maximization Algorithm
-   * @return {json} nested array of message assignments, one for each node in the
-   * EthereumNetwork
-   */
+  * run the Expectation Maximization Algorithm
+  * @return {json} nested array of message assignments, one for each node in the
+  * EthereumNetwork
+  */
   withEM () {
     //it's very important to be able to handle missing data to work with
-    //sorted data
-    let sortedNodeIDs = EthereumNetwork.getNodeIDs().sort();
+    //sorted data.
+    let sortedAllNodeIDs = EthereumNetwork.getNodeIDs().sort();
+    let macrophageNodeIDs = this.networkGraph.getSelectedMacrophages().map((node) => node.nodeID);
 
     let posteriorProbabilities = Object.keys(this.txHashMessages).map((targetNodeID) => {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
-      //filter out messages that haven't been received from all known nodes
-      .filter((hash) => {
-        return sortedNodeIDs
-        .filter((nodeID) => nodeID.localeCompare(targetNodeID) !== 0);
+      //filter out messages that were sent to a macrophage
+      .map((hash) => {
+        return this.txHashMessages[targetNodeID][hash]
+        .filter((message) => {
+          return macrophageNodeIDs.every((macNodeID) => {
+            return macNodeID.localeCompare(message.from) !== 0;
+          });
+        })
+        .sort((a, b) => a.from.localeCompare(b.from));
       })
-      .map((message) => this.getSortedPayloadHashMessages(targetNodeID, message));
+      //the algorithm will break without filtering out empty message groups
+      .filter((messsageGroup) => messsageGroup.length);
 
       return {
         nodeID:        targetNodeID,
@@ -121,7 +133,7 @@ class Analysis {
 
       //input data converted from the messages into numbers
       let X = data.messageGroups.map((messageGroup) => {
-        return sortedNodeIDs.map((nodeID) => {
+        return sortedAllNodeIDs.map((nodeID) => {
           let time = null;
           messageGroup.forEach((message) => {
             if(message.from.localeCompare(nodeID) === 0) {
@@ -146,7 +158,7 @@ class Analysis {
 
       //helper defnitions
       let n = X.length;
-      let d = sortedNodeIDs.length;
+      let d = sortedAllNodeIDs.length;
 
       //*these are tunable parameters*
       //initial mixing probability
@@ -184,9 +196,9 @@ class Analysis {
       //removed in favor of sending all the data
       /*let assignmentClusters = new Array(n).fill(0);
       pjt.forEach((jt, j) => {
-        jt.forEach((prob, i) => {
-          assignmentClusters[i] = prob > pjt[assignmentClusters[i]][i] ? j : assignmentClusters[i];
-        });
+      jt.forEach((prob, i) => {
+      assignmentClusters[i] = prob > pjt[assignmentClusters[i]][i] ? j : assignmentClusters[i];
+      });
       });*/
 
       let assignments = [];
@@ -194,7 +206,7 @@ class Analysis {
         jt.forEach((prob, i) => {
           assignments.push({
             assignor: data.nodeID,
-            creator:  sortedNodeIDs[j],
+            creator:  sortedAllNodeIDs[j],
             hash:     data.messageGroups[i][0].txHash,
             prob:     prob,
           });
@@ -211,14 +223,14 @@ class Analysis {
 }
 
 /**
- * Expectation Maximization likelihood calculator,
- * uses the log domain to mitigate underflow errors
- * *Note: sigma must be non zero
- * @param  {[float]} x     one row of input data
- * @param  {[float]} mu    the average mean for one cluster
- * @param  {float} sigma the variance for one cluster
- * @return {float}       a single value estimate
- */
+* Expectation Maximization likelihood calculator,
+* uses the log domain to mitigate underflow errors
+* *Note: sigma must be non zero
+* @param  {[float]} x     one row of input data
+* @param  {[float]} mu    the average mean for one cluster
+* @param  {float} sigma the variance for one cluster
+* @return {float}       a single value estimate
+*/
 Analysis.logN = function (x, mu, sigma) {
   let d = x.length;
   let squaredDiff = x.reduce((x0, x1, i1) => {
@@ -230,14 +242,14 @@ Analysis.logN = function (x, mu, sigma) {
 };
 
 /**
- * Expectation Maximization e step, uses the log domain to mitigate underflow errors
- * @param  {[[float]]} X    2d array of input values, each row is a d dimensional array
- * @param  {int} K          number of clusters to estimate with
- * @param  {[[float]]} Mu     Kx1 dimensional array of means for each cluster
- * @param  {[float]} P      Kx1 array of mixing proportions for each cluster
- * @param  {[float]} Sigma  Kxd array of variances for each cluster
- * @return {[[float], float]} returns the new posterior probabilities and mixing proportions
- */
+* Expectation Maximization e step, uses the log domain to mitigate underflow errors
+* @param  {[[float]]} X    2d array of input values, each row is a d dimensional array
+* @param  {int} K          number of clusters to estimate with
+* @param  {[[float]]} Mu     Kx1 dimensional array of means for each cluster
+* @param  {[float]} P      Kx1 array of mixing proportions for each cluster
+* @param  {[float]} Sigma  Kxd array of variances for each cluster
+* @return {[[float], float]} returns the new posterior probabilities and mixing proportions
+*/
 Analysis.estep = function (X, K, Mu, P, Sigma) {
   LL = 0.0; //the LogLikelihood
   let n = X.length;
@@ -274,16 +286,16 @@ Analysis.estep = function (X, K, Mu, P, Sigma) {
 };
 
 /**
- * [mstep description]
- * @param  {[[float]]} X      2d array of input values, each row is a d dimensional array
- * @param  {int} K            number of clusters to estimate with
- * @param  {[[float]]} Mu     Kxd dimensional array of means for each cluster
- * @param  {[float]} P        Kx1 array of mixing proportions for each cluster
- * @param  {[float]} Sigma    Kx1 array of variances for each cluster
- * @param  {[[float]]} post   posterior probabilities for each cluster
- * @param  {float} minVariance = 0.00000001       minimum variance allowed (non zero)
- * @return {[[[float]], [float], [float]]}        return [Mu, P, Sigma]
- */
+* [mstep description]
+* @param  {[[float]]} X      2d array of input values, each row is a d dimensional array
+* @param  {int} K            number of clusters to estimate with
+* @param  {[[float]]} Mu     Kxd dimensional array of means for each cluster
+* @param  {[float]} P        Kx1 array of mixing proportions for each cluster
+* @param  {[float]} Sigma    Kx1 array of variances for each cluster
+* @param  {[[float]]} post   posterior probabilities for each cluster
+* @param  {float} minVariance = 0.00000001       minimum variance allowed (non zero)
+* @return {[[[float]], [float], [float]]}        return [Mu, P, Sigma]
+*/
 Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
   let n = X.length;
   let d = K;

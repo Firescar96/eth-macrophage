@@ -104,9 +104,9 @@ function createGethInstance () {
       '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', Assets.absoluteFilePath('mine.js')]);
 
       //For some reason geth flips the out and err output..or something
-      cmd.stdout.on('data', (data) => {
-        //console.log(data.toString());
-      });
+      /*cmd.stdout.on('data', (data) => {
+        console.log(data.toString());
+      });*/
       cmd.stderr.on('data', (err) => {
         console.error(err.toString());
       });

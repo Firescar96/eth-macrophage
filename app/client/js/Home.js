@@ -3,6 +3,9 @@ import {NetworkGraph} from './NetworkGraph.js';
 import {MessageGraph} from './MessageGraph.js';
 import {analysis} from './Analysis.js';
 
+const MICROBE = 'microbe';
+const MACROPHAGE = 'macrophage';
+
 let navbar = (
   <nav>
     <h1>Ethereum Macrophage</h1>
@@ -12,7 +15,7 @@ let navbar = (
 //TODO: suppress this warning
 let NodeButton = React.createClass({
   onClick () {
-    this.props.getNetworkGraph().setSelectedNode(this.props.nodeID);
+    this.props.getNetworkGraph().setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
   },
   render () {
     return (
@@ -29,6 +32,7 @@ var Home = React.createClass({
     return {
       peerIDs:         EthereumNetwork.getNodeIDs(),
       shouldUpdateDOM: true,
+      role:                         MICROBE,
     };
   },
   getNetworkGraph () {
@@ -65,10 +69,19 @@ var Home = React.createClass({
     });
   },
   addAllPeers () {
-    this.state.networkGraph.getSelectedNode().addAllPeers();
+    this.state.networkGraph.getSelectedMicrobe().addAllPeers();
+  },
+  changeRole (event) {
+    if(event.target.checked) {
+      this.setState({role: MACROPHAGE, shouldUpdateDOM: true});
+      this.state.networkGraph.setSelectedRole(MACROPHAGE);
+    }else {
+      this.setState({role: MICROBE, shouldUpdateDOM: true});
+      this.state.networkGraph.setSelectedRole(MICROBE);
+    }
   },
   sendMessage () {
-    let selectedNode = this.state.networkGraph.getSelectedNode();
+    let selectedNode = this.state.networkGraph.getSelectedMicrobe();
     selectedNode.sendTransaction({
       from:  selectedNode.defaultAccount,
       to:    '0x0000000000000000000000000000000000000000',
@@ -86,7 +99,7 @@ var Home = React.createClass({
       return (<NodeButton key={id} nodeID={id} getNetworkGraph={this.getNetworkGraph}/>);
     });
 
-    let isNodeSelected = this.state.networkGraph && !!this.state.networkGraph.getSelectedNode();
+    let isNodeSelected = this.state.networkGraph && !!this.state.networkGraph.getSelectedMicrobe();
 
     return (
       <div>
@@ -95,6 +108,10 @@ var Home = React.createClass({
         <main>
           <div id="nodeSidebar">
             {nodeButtons}
+            <input id="roleSelector" type="checkbox" className="tgl tgl-flat"
+              checked={this.state.role.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
+              onChange={this.changeRole}/>
+            <label htmlFor="roleSelector" className="tgl-btn"></label>
           </div>
 
           <div id="graphs">
@@ -132,6 +149,8 @@ var Home = React.createClass({
       networkGraph:    new NetworkGraph('#networkGraph', graphData, this.forceUpdate.bind(this)),
       messageGraph:    new MessageGraph('#messageGraph', [], this.forceUpdate.bind(this)),
       shouldUpdateDOM: false,
+    }, () => {
+      analysis.setNetworkGraph(this.state.networkGraph);
     });
     this.updateNetworkGraphData();
   },

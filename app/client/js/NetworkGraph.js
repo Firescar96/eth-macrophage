@@ -1,5 +1,8 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
 
+const MICROBE = 'microbe';
+const MACROPHAGE = 'macrophage';
+
 class NetworkGraph {
   /*
   selection: html element in which to inset the graph
@@ -13,7 +16,9 @@ class NetworkGraph {
     this.curLinksData = [];
     this.curNodesData = [];
     ///this.nodeColors = d3.scale.category20();
-    this._selectedNode = null;
+    this._selectedMicrobe = null;
+    this._selectedMacrophages = [];
+    this._selectedRole = MICROBE;
     this.graphData = {nodes: [], links: []};
     let vis = d3.select(selection)
     .append('svg').attr('width', this.width)
@@ -118,11 +123,8 @@ class NetworkGraph {
     //.style('fill', (d) => { return this.nodeColors(d.artist); })
     //.style('stroke', (d) => { return this._strokeFor(d); })
     .style('stroke-width', 1.0)
-    .on('click', function () {
-      networkGraph.nodesG.selectAll('circle.node').attr('fill', '#000');
-      networkGraph._selectedNode = d3.select(this);
-      networkGraph._selectedNode.attr('fill', '#f00');
-      networkGraph._updateDOM();
+    .on('click', (d) => {
+      this.setSelectedNode(d);
     });
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);
     node.exit().remove();
@@ -155,9 +157,9 @@ class NetworkGraph {
   }
 
   /**
-   * call this with new data for the visualization
-   * @param  {json} newData
-   */
+  * call this with new data for the visualization
+  * @param  {json} newData
+  */
   updateGraphData (newData) {
     if(!newData.nodes || !newData.links) {
       return;
@@ -185,6 +187,8 @@ class NetworkGraph {
     });
 
     let newNodes = filteredData.nodes.map((nID) => {
+      //TODO: fix race condition, sometimes the code gets here without the network having created
+      //the node yet.
       let n = EthereumNetwork.getNodeByID(nID);
       n.x = Math.floor(Math.random() * this.width);
       n.y = Math.floor(Math.random() * this.height);
@@ -219,21 +223,82 @@ class NetworkGraph {
     this._update();
   }
 
-  getSelectedNode () {
-    if(!this._selectedNode) {
+  getSelectedMicrobe () {
+    if(!this._selectedMicrobe) {
       return null;
     }
-    return this._selectedNode.data()[0];
+    return this._selectedMicrobe.data()[0];
   }
 
-  setSelectedNode (selectedNodeID) {
-    this.nodesG.selectAll('circle.node').attr('fill', '#000');
-    this._selectedNode = this.nodesG.selectAll('circle.node')
-    .filter((d) => {
-      return selectedNodeID.localeCompare(d.nodeID) == 0;
-    })
-    .attr('fill', '#f00');
+  getSelectedMacrophages () {
+    if(this._selectedMacrophages.length === 0) {
+      return [];
+    }
+    return this._selectedMacrophages.map((macrophage) => {
+      return macrophage.data()[0];
+    });
+  }
+
+  setSelectedNode (selectedNode) {
+    if(this._selectedRole.localeCompare(MICROBE) === 0) {
+
+      let selectedMicrobe = this.nodesG.selectAll('circle.node')
+      .filter((d) => {
+        return selectedNode.nodeID.localeCompare(d.nodeID) == 0;
+      });
+
+      let alreadySelected = false;
+      this._selectedMacrophages.some((macrophage, i) => {
+        if(macrophage.data()[0] === selectedMicrobe.data()[0]) {
+          alreadySelected = true;
+          return;
+        }
+      });
+      if(alreadySelected) {
+        return;
+      }
+      if(this._selectedMicrobe) {
+        this._selectedMicrobe.attr('fill', '#000');
+      }
+
+      this._selectedMicrobe = selectedMicrobe;
+      this._selectedMicrobe.attr('fill', '#00e0ff');
+    }else if(this._selectedRole.localeCompare(MACROPHAGE) === 0) {
+      let selectedMacrophage = this.nodesG.selectAll('circle.node')
+      .filter((d) => {
+        return selectedNode.nodeID.localeCompare(d.nodeID) == 0;
+      });
+
+      if(this._selectedMicrobe) {
+        if(this._selectedMicrobe.data()[0] === selectedMacrophage.data()[0]) {
+          return;
+        }
+      }
+
+      let macrophageIndex = -1;
+      this._selectedMacrophages.forEach((macrophage, i) => {
+        if(macrophage.data()[0] === selectedMacrophage.data()[0]) {
+          macrophageIndex = i;
+          this._selectedMacrophages.splice(macrophageIndex, 1);
+          selectedMacrophage.attr('fill', '#000');
+          return;
+        }
+      });
+      if(macrophageIndex == -1) {
+        this._selectedMacrophages.push(selectedMacrophage);
+        selectedMacrophage.attr('fill', '#f00');
+      }
+    }
+
     this._updateDOM();
+  }
+
+  getSelectedRole () {
+    return this._selectedRole;
+  }
+
+  setSelectedRole (role) {
+    this._selectedRole = role;
   }
 }
 
