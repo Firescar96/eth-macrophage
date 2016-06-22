@@ -34,12 +34,12 @@ EthereumNetwork.getNodeByID = function (id) {
  * the node when complete
  * @return {Promise}
  */
-EthereumNetwork.createNode = function () {
+EthereumNetwork.createNode = function (isMiner) {
   let currentNonce = EthereumNetwork._currentNonce++;
   let defer = new Promise((resolve, reject) => {
     let newNode = new EthereumNode(currentNonce);
     Meteor.call('createGethInstance',
-    {nonce: currentNonce},
+    {nonce: currentNonce, isMiner: isMiner},
     (err, rpcport) => {
       if(err) {
         console.error(err);

@@ -1,6 +1,6 @@
 import React from 'react';
-import {NetworkGraph} from './NetworkGraph.js';
-import {MessageGraph} from './MessageGraph.js';
+import {networkGraph} from './NetworkGraph.js';
+import {messageGraph} from './MessageGraph.js';
 import {analysis} from './Analysis.js';
 
 const MICROBE = 'microbe';
@@ -15,7 +15,7 @@ let navbar = (
 //TODO: suppress this warning
 let NodeButton = React.createClass({
   onClick () {
-    this.props.getNetworkGraph().setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
+    networkGraph.setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
   },
   render () {
     return (
@@ -35,9 +35,6 @@ var Home = React.createClass({
       role:                         MICROBE,
     };
   },
-  getNetworkGraph () {
-    return this.state.networkGraph;
-  },
   componentWillMount () {
     let updateNodes = function () {
       let nodeIDs = EthereumNetwork.getNodeIDs();
@@ -54,7 +51,7 @@ var Home = React.createClass({
     setInterval(updateNodes.bind(this), 1000);
   },
   addNode () {
-    EthereumNetwork.createNode().then((newNode) => {
+    EthereumNetwork.createNode(false).then((newNode) => {
       newNode.addPeer();
       let graphData = {};
       graphData.nodes = [newNode];
@@ -64,24 +61,24 @@ var Home = React.createClass({
           return {'source': newNode.nodeID, 'target': peer.nodeID};
         }));
 
-        this.state.networkGraph.updateGraphData(graphData);
+        networkGraph.updateGraphData(graphData);
       });
     });
   },
   addAllPeers () {
-    this.state.networkGraph.getSelectedMicrobe().addAllPeers();
+    networkGraph.getSelectedMicrobe().addAllPeers();
   },
   changeRole (event) {
     if(event.target.checked) {
       this.setState({role: MACROPHAGE, shouldUpdateDOM: true});
-      this.state.networkGraph.setSelectedRole(MACROPHAGE);
+      networkGraph.setSelectedRole(MACROPHAGE);
     }else {
       this.setState({role: MICROBE, shouldUpdateDOM: true});
-      this.state.networkGraph.setSelectedRole(MICROBE);
+      networkGraph.setSelectedRole(MICROBE);
     }
   },
   sendMessage () {
-    let selectedNode = this.state.networkGraph.getSelectedMicrobe();
+    let selectedNode = networkGraph.getSelectedMicrobe();
     selectedNode.sendTransaction({
       from:  selectedNode.defaultAccount,
       to:    '0x0000000000000000000000000000000000000000',
@@ -89,17 +86,17 @@ var Home = React.createClass({
     });
   },
   runEMAnalysis () {
-    this.state.messageGraph.updateData(analysis.withEM());
+    messageGraph.updateData(analysis.withEM());
   },
   shouldComponentUpdate (nextProps, nextState) {
     return nextState.shouldUpdateDOM;
   },
   render () {
     let nodeButtons = this.state.peerIDs.map((id) => {
-      return (<NodeButton key={id} nodeID={id} getNetworkGraph={this.getNetworkGraph}/>);
+      return (<NodeButton key={id} nodeID={id}/>);
     });
 
-    let isNodeSelected = this.state.networkGraph && !!this.state.networkGraph.getSelectedMicrobe();
+    let isNodeSelected = !!networkGraph.getSelectedMicrobe();
 
     return (
       <div>
@@ -142,15 +139,10 @@ var Home = React.createClass({
     );
   },
   componentDidMount () {
-    let graphData = {};
-    graphData.nodes = [];
-    graphData.links = [];
+    networkGraph.init('#networkGraph', this.forceUpdate.bind(this));
+    messageGraph.init('#messageGraph', this.forceUpdate.bind(this));
     this.setState({
-      networkGraph:    new NetworkGraph('#networkGraph', graphData, this.forceUpdate.bind(this)),
-      messageGraph:    new MessageGraph('#messageGraph', [], this.forceUpdate.bind(this)),
       shouldUpdateDOM: false,
-    }, () => {
-      analysis.setNetworkGraph(this.state.networkGraph);
     });
     this.updateNetworkGraphData();
   },
@@ -173,7 +165,7 @@ var Home = React.createClass({
       let graphData = {};
       graphData.nodes = this.state.peerIDs;
       graphData.links = [].concat.apply([], peerLinks);
-      this.state.networkGraph.updateGraphData(graphData);
+      networkGraph.updateGraphData(graphData);
     });
   }
 });

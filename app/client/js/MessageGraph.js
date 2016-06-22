@@ -4,14 +4,13 @@ class MessageGraph {
   data:
   updateDOM:
   */
- /**
+  /**
   * [constructor description]
   * @param  {string} selection    html element in which to inset the graph
   * @param  {json} data           JSON object of the graph data
   * @param  {Function} updateDOM  function that will triger updates to the containing DOM
   */
-  constructor (selection, data, updateDOM) {
-    this._updateDOM = updateDOM;
+  constructor (selection, updateDOM) {
     this.margin = {
       top:    40,
       right:  40,
@@ -20,7 +19,10 @@ class MessageGraph {
     };
     this.width = 660;
     this.height = 500;
+  }
 
+  init (selection, updateDOM) {
+    this._updateDOM = updateDOM;
     this.messageData = [];
     this.svg = d3.select(selection)
     .append('svg')
@@ -58,9 +60,20 @@ class MessageGraph {
     .map((data) => data.creator)
     .unique();
 
+    this.width = this.margin.left + this.margin.right + uniqueCreators.length * 80;
+    this.svg.attr('width', this.width);
+    this.messagesG.attr('width', this.width - this.margin.left - this.margin.right);
+
+    uniqueAssignors = this.messageData
+    .map((data) => data.assignors);
+
     let uniqueHashes = this.messageData
     .map((data) => data.hash)
     .unique();
+
+    this.height = this.margin.top + this.margin.bottom + uniqueHashes.length * 20;
+    this.svg.attr('height', this.height);
+    this.messagesG.attr('height', this.height - this.margin.top - this.margin.bottom);
 
     x = d3.scale.ordinal().domain(uniqueCreators)
     .rangeRoundBands([this.margin.left, this.width - this.margin.left - this.margin.right], 0.1);
@@ -90,7 +103,8 @@ class MessageGraph {
     .attr('transform', rectTransform)
     .attr('width', (d) => x.rangeBand())
     .attr('height', (d) => y.rangeBand())
-    .attr('fill-opacity', (d) => d.prob / uniqueCreators.length)
+    .attr('fill', '#000')
+    .attr('fill-opacity', (d, i) => d.prob / uniqueAssignors[i].length)
     .append('text')
     .text((d) => d.hash)
     /*.on('mouseover', function(e){
@@ -136,26 +150,40 @@ class MessageGraph {
   }
 
   /**
-   * call this with new data from the analysis for the visualization
-   * @param  {json} newData
-   */
+  * call this with new data from the analysis for the visualization
+  * @param  {json} newData
+  */
   updateData (newData) {
-    let flatData = newData
-    .reduce((a, b) => a.concat(b), [])
-    .map((data) => {
-      return {
-        assignor: data.assignor,
-        creator:  data.creator.substring(0, 10),
-        hash:     data.hash.substring(0, 10),
-        prob:     data.prob,
-      };
+    let flatDataMap = {};
+    newData.forEach((assignorData) => {
+      assignorData.forEach((data) => {
+        if(!flatDataMap[data.creator + data.hash]) {
+          flatDataMap[data.creator + data.hash] = {
+            assignors: [],
+            creator:   data.creator.substring(0, 10),
+            hash:      data.hash.substring(0, 10),
+            prob:      0,
+          };
+        }
+        flatDataMap[data.creator + data.hash].prob += data.prob;
+        flatDataMap[data.creator + data.hash].assignors.push({
+          assignor: data.assignor,
+          prob:     data.prob,
+        });
+      });
     });
 
+    let flatData = Object.keys(flatDataMap)
+    .map((key) => {
+      return flatDataMap[key];
+    });
+    //.filter((data) => data.prob > 0);
+
     this.messageData = flatData;
-    //console.log(flatData);
 
     this._update();
   }
 }
 
-export {MessageGraph};
+let messageGraph = new MessageGraph();
+export {messageGraph};

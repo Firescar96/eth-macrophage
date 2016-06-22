@@ -1,5 +1,5 @@
-
 import {EthereumNetwork} from './EthereumNetwork.js';
+import {networkGraph} from './NetworkGraph.js';
 
 //this will be used as the minimum time for a message to be sent over the network
 //in graphs and calculations, data will be scaled to this instead of 0
@@ -12,7 +12,6 @@ const MINIMUM_NETWORK_TIME = 1;
 class Analysis {
 
   constructor () {
-    this.networkGraph = null;
     this.txHashFrequency = {};
     this.txHashMessages = {};
 
@@ -30,9 +29,6 @@ class Analysis {
       this.txHashMessages[node.nodeID] = {};
       node.txFilter(this._update.bind(this));
     });
-  }
-  setNetworkGraph (graph) {
-    this.networkGraph = graph;
   }
 
   _update (targetNode, message) {
@@ -84,12 +80,12 @@ class Analysis {
   * @param  {string} message
   * @return {[json]}         a sorted array of json objects, one for each message
   */
- /*
+  /*
   getSortedTxHashMessages (nodeID, hash) {
-    let items = this.txHashMessages[nodeID][hash];
-    items.sort((a, b) => a.from.localeCompare(b.from));
+  let items = this.txHashMessages[nodeID][hash];
+  items.sort((a, b) => a.from.localeCompare(b.from));
 
-    return items;
+  return items;
   }*/
 
   /**
@@ -101,9 +97,11 @@ class Analysis {
     //it's very important to be able to handle missing data to work with
     //sorted data.
     let sortedAllNodeIDs = EthereumNetwork.getNodeIDs().sort();
-    let macrophageNodeIDs = this.networkGraph.getSelectedMacrophages().map((node) => node.nodeID);
+    let macrophageNodeIDs = networkGraph.getSelectedMacrophages().map((node) => node.nodeID);
+    let evaluateNodeIDs = macrophageNodeIDs.length > 0 ?
+    macrophageNodeIDs : Object.keys(this.txHashMessages);
 
-    let posteriorProbabilities = Object.keys(this.txHashMessages).map((targetNodeID) => {
+    let posteriorProbabilities = evaluateNodeIDs.map((targetNodeID) => {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
       //filter out messages that were sent to a macrophage
       .map((hash) => {

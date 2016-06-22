@@ -37,6 +37,7 @@ var gethConfig = {
   bootnodes:     '""',
   datadir:       GETH_BASE_DATADIR,
   genesis:       Assets.absoluteFilePath('genesis.json'),
+  js:            Assets.absoluteFilePath('periodicmine.js'),
   logfile:       'log.log',
   minerthreads:  1,
   maxpeers:      25,
@@ -45,16 +46,16 @@ var gethConfig = {
   port:          GETH_BASE_PORT,
   rpc:           true,
   rpcport:       GETH_BASE_RPCPORT,
-  rpcaddr:       '127.0.0.1',
+  rpcaddr:       '0.0.0.0',
   rpcapi:        'admin,web3,eth,net',
-  rpccorsdomain: 'http://127.0.0.1:3000, http://localhost:3000',
+  rpccorsdomain: 'http://127.0.0.1:3000, http://localhost:3000, http://40.77.56.231:3000',
 };
 
 /**
 * creates a new geth node and increments the curNonceState
 * @return undefined
 */
-function createGethInstance () {
+function createGethInstance (isMiner) {
   let curNonce = curNonceState;
   //need an instance so the callback below will use this version and not changes
   let gethInstanceConfig = {};
@@ -66,6 +67,8 @@ function createGethInstance () {
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
   gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
   gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
+  gethInstanceConfig.js = isMiner ?
+  Assets.absoluteFilePath('pendmine.js') : Assets.absoluteFilePath('periodicmine.js');
 
   //this database is used on the client to get this node's received txs
   let TxData = new Mongo.Collection('txdata' + curNonce);
@@ -101,12 +104,12 @@ function createGethInstance () {
       gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
       '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
       '--password=' + gethInstanceConfig.password, '--bootnodes=' + gethInstanceConfig.bootnodes,
-      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', Assets.absoluteFilePath('mine.js')]);
+      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', gethInstanceConfig.js]);
 
       //For some reason geth flips the out and err output..or something
-      /*cmd.stdout.on('data', (data) => {
+      cmd.stdout.on('data', (data) => {
         console.log(data.toString());
-      });*/
+      });
       cmd.stderr.on('data', (err) => {
         console.error(err.toString());
       });
@@ -117,9 +120,9 @@ function createGethInstance () {
 }
 
 Meteor.methods({
-  createGethInstance ({nonce}) {
+  createGethInstance ({nonce, isMiner}) {
     if(nonce >= curNonceState) {
-      createGethInstance();
+      createGethInstance(isMiner);
       return GETH_BASE_RPCPORT + (curNonceState - 1);
     }
     return GETH_BASE_RPCPORT + nonce;

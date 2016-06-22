@@ -3,12 +3,12 @@ import {Home} from './Home.js';
 import {mount} from 'react-mounter';
 const NUM_GETH_INSTANCES = 3;
 
-EthereumNetwork.createNode().then((bootnode) => {
+EthereumNetwork.createNode(true).then((bootnode) => {
   EthereumNetwork.setDefaultBootnode(bootnode);
   let createNodePromises = [];
   for(var i = 1; i < NUM_GETH_INSTANCES; i++) {
     let defer = new Promise((resolve, reject) => {
-      EthereumNetwork.createNode().then( (newNode) => {
+      EthereumNetwork.createNode(false).then( (newNode) => {
         newNode.addPeer().then(() => {
           resolve();
         });

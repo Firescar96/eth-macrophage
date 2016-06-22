@@ -9,17 +9,19 @@ class NetworkGraph {
   data: JSON object of the graph data
   updateDOM: function that will triger updates to the containing DOM
   */
-  constructor (selection, data, updateDOM) {
-    this._updateDOM = updateDOM;
+  constructor () {
     this.width = 660;
     this.height = 500;
     this.curLinksData = [];
     this.curNodesData = [];
-    ///this.nodeColors = d3.scale.category20();
     this._selectedMicrobe = null;
     this._selectedMacrophages = [];
     this._selectedRole = MICROBE;
     this.graphData = {nodes: [], links: []};
+  }
+
+  init (selection, updateDOM) {
+    this._updateDOM = updateDOM;
     let vis = d3.select(selection)
     .append('svg').attr('width', this.width)
     .attr('height', this.height);
@@ -29,7 +31,7 @@ class NetworkGraph {
     this.force = d3.layout.force()
     .size([this.width, this.height])
     .charge(-500)
-    .linkDistance(400)
+    .linkDistance(300)
     .on('tick', this._forceTick.bind(this));
     this._update();
   }
@@ -193,7 +195,7 @@ class NetworkGraph {
       n.x = Math.floor(Math.random() * this.width);
       n.y = Math.floor(Math.random() * this.height);
       //TODO: scale radious based on number of peers
-      n.r = 5;
+      n.r = 10;
       return n;
     });
     this.graphData.nodes.push(...newNodes);
@@ -302,4 +304,5 @@ class NetworkGraph {
   }
 }
 
-export {NetworkGraph};
+let networkGraph = new NetworkGraph();
+export {networkGraph, NetworkGraph};
