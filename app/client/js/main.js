@@ -2,7 +2,24 @@ import {EthereumNetwork} from './EthereumNetwork.js';
 import {Home} from './Home.js';
 import {mount} from 'react-mounter';
 const NUM_GETH_INSTANCES = 3;
+const APP_IP = '40.77.56.231';
+//const APP_IP = '127.0.0.1';
 
+//Configure to use the server instead of a local geth node
+let appURL = 'http://' + APP_IP + ':3000/';
+
+Meteor.connection = Meteor.connect(appURL);
+_.each(['subscribe', 'methods', 'call', 'apply', 'status', 'reconnect', 'disconnect'],
+function (name) {
+  Meteor[name] = _.bind(Meteor.connection[name], Meteor.connection);
+});
+Package.reload = false;
+
+//Meteor.connection._stream._changeUrl(appURL);
+Meteor.absoluteUrl.defaultOptions.rootUrl = appURL;
+//Meteor.connection.reconnect();
+
+EthereumNetwork.setIP(APP_IP);
 EthereumNetwork.createNode(true).then((bootnode) => {
   EthereumNetwork.setDefaultBootnode(bootnode);
   let createNodePromises = [];

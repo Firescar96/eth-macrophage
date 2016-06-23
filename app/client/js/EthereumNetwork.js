@@ -1,5 +1,6 @@
 class EthereumNetwork {}
 
+EthereumNetwork._ip = '127.0.0.1';
 //using multiple data structures to store nodeIDs for better lookup
 EthereumNetwork._members = {};
 EthereumNetwork._nodeIDCollection = new Mongo.Collection('networkMemberIDs');
@@ -11,6 +12,18 @@ Meteor.subscribe('networkMemberIDs', () => {
 
 EthereumNetwork._defaultBootnode;
 EthereumNetwork._currentNonce = 0;
+
+/**
+ * sets the ip address of the server to connect to to manage nodes
+ * @param {sting} ip
+ */
+EthereumNetwork.setIP = function (ip) {
+  EthereumNetwork._ip = ip;
+};
+
+EthereumNetwork.getIP = function () {
+  return EthereumNetwork._ip;
+};
 
 /**
  * get an array of all node IDs

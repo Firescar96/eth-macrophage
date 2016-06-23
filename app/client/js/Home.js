@@ -5,6 +5,7 @@ import {analysis} from './Analysis.js';
 
 const MICROBE = 'microbe';
 const MACROPHAGE = 'macrophage';
+const CONNECTIONS = 'connections';
 
 let navbar = (
   <nav>
@@ -53,29 +54,14 @@ var Home = React.createClass({
   addNode () {
     EthereumNetwork.createNode(false).then((newNode) => {
       newNode.addPeer();
-      let graphData = {};
-      graphData.nodes = [newNode];
-      graphData.links = [];
-      newNode.getPeers().then(([err, peers]) => {
-        graphData.links.push(...peers.map((peer) => {
-          return {'source': newNode.nodeID, 'target': peer.nodeID};
-        }));
-
-        networkGraph.updateGraphData(graphData);
-      });
     });
   },
   addAllPeers () {
     networkGraph.getSelectedMicrobe().addAllPeers();
   },
   changeRole (event) {
-    if(event.target.checked) {
-      this.setState({role: MACROPHAGE, shouldUpdateDOM: true});
-      networkGraph.setSelectedRole(MACROPHAGE);
-    }else {
-      this.setState({role: MICROBE, shouldUpdateDOM: true});
-      networkGraph.setSelectedRole(MICROBE);
-    }
+    this.setState({role: event.target.value, shouldUpdateDOM: true});
+    networkGraph.setSelectedRole(event.target.value);
   },
   sendMessage () {
     let selectedNode = networkGraph.getSelectedMicrobe();
@@ -87,6 +73,9 @@ var Home = React.createClass({
   },
   runEMAnalysis () {
     messageGraph.updateData(analysis.withEM());
+  },
+  resetAnalysis () {
+    analysis.reset();
   },
   shouldComponentUpdate (nextProps, nextState) {
     return nextState.shouldUpdateDOM;
@@ -105,10 +94,6 @@ var Home = React.createClass({
         <main>
           <div id="nodeSidebar">
             {nodeButtons}
-            <input id="roleSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.role.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
-              onChange={this.changeRole}/>
-            <label htmlFor="roleSelector" className="tgl-btn"></label>
           </div>
 
           <div id="graphs">
@@ -132,6 +117,21 @@ var Home = React.createClass({
             <button className="nodeAction" onClick={this.runEMAnalysis}>
               run EM analysis
             </button>
+            <button className="nodeAction" onClick={this.resetAnalysis}>
+              reset analysis
+            </button>
+            <input id="microbeSelector" type="checkbox" className="tgl tgl-flat"
+              checked={this.state.role.localeCompare(MICROBE) === 0 ? 'checked' : ''}
+              onChange={this.changeRole} value={MICROBE}/>
+            <label htmlFor="microbeSelector" className="tgl-btn"></label>
+            <input id="macrophageSelector" type="checkbox" className="tgl tgl-flat"
+              checked={this.state.role.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
+              onChange={this.changeRole} value={MACROPHAGE}/>
+            <label htmlFor="macrophageSelector" className="tgl-btn"></label>
+            <input id="connectionsSelector" type="checkbox" className="tgl tgl-flat"
+              checked={this.state.role.localeCompare(CONNECTIONS) === 0 ? 'checked' : ''}
+              onChange={this.changeRole} value={CONNECTIONS}/>
+            <label htmlFor="connectionsSelector" className="tgl-btn"></label>
           </div>
         </main>
 
@@ -154,9 +154,12 @@ var Home = React.createClass({
     var getPeersPromises = ethereumNodes.map((node) => {
       return new Promise((fufill, reject1) => {
         node.getPeers().then(([err, peers]) => {
-          fufill(peers.map((peer) => {
-            return {'source': node.nodeID, 'target': peer.nodeID};
-          }));
+          fufill(
+            peers.filter((peer) => this.state.peerIDs.includes(peer.nodeID))
+            .map((peer) => {
+              return {'source': node.nodeID, 'target': peer.nodeID};
+            })
+          );
         });
       });
     });

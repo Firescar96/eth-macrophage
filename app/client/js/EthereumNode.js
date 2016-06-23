@@ -11,13 +11,14 @@ class EthereumNode {
   }
 
   /**
-   * use this function to establish a connection for a node to web3,
-   * when the connection is established the promise if fufilled
-   * @param  {int} port
-   * @return {Promise}
-   */
+  * use this function to establish a connection for a node to web3,
+  * when the connection is established the promise if fufilled
+  * @param  {int} port
+  * @return {Promise}
+  */
   initializeConnection (port) {
-    let web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:' + port));
+    let web3 = new Web3(new Web3.providers.HttpProvider('http://' +
+    EthereumNetwork.getIP() + ':' + port));
     web3._extend({
       'property': 'admin',
       'methods':  [],
@@ -160,9 +161,9 @@ class EthereumNode {
   }
 
   /**
-   * use this to setup a callback to listen for new transactions
-   * @param  {Function} callback(this, theData)
-   */
+  * use this to setup a callback to listen for new transactions
+  * @param  {Function} callback(this, theData)
+  */
   txFilter (callback) {
     this.TxData.find({}).observeChanges({
       added: (id, data) => {

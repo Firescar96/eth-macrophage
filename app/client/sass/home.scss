@@ -1,5 +1,6 @@
-nav {
+@import "mixins";
 
+nav {
   h1 {
     display: block;
     padding: 20px 0;
@@ -15,6 +16,25 @@ main {
   div#nodeSidebar {
     float: left;
     button.nodeReference {
+      display: block;
+      position: relative;
+      margin: 10px;
+      padding: 0 5px;
+      background-color: transparent;
+      border: solid 2px black;
+      outline: none;
+      font-size: 24px;
+    }
+  }
+
+  div#graphs {
+    flex: 1;
+  }
+
+  div#actionSidebar {
+    float: right;
+
+    button.nodeAction {
       display: block;
       position: relative;
       margin: 10px;
@@ -71,16 +91,25 @@ main {
     }
 
     .tgl-flat {
+
+      &#microbeSelector {
+        @include tglColorize(#00e0ff, #aaa);
+      }
+      &#macrophageSelector {
+        @include tglColorize(#a30000, #aaa);
+      }
+      &#connectionsSelector {
+        @include tglColorize(#22aa00, #aaa);
+      }
+
       + .tgl-btn {
         margin: auto;
         padding: 2px;
         transition: all .2s ease;
         background: #fff;
-        border: 4px solid #00e0ff;
         border-radius: 2em;
         &:after {
           transition: all .2s ease;
-          background: #00e0ff;
           content: "";
           border-radius: 1em;
         }
@@ -93,25 +122,6 @@ main {
           background: #f00;
         }
       }
-    }
-  }
-
-  div#graphs {
-    flex: 1;
-  }
-
-  div#actionSidebar {
-    float: right;
-
-    button.nodeAction {
-      display: block;
-      position: relative;
-      margin: 10px;
-      padding: 0 5px;
-      background-color: transparent;
-      border: solid 2px black;
-      outline: none;
-      font-size: 24px;
     }
   }
 }

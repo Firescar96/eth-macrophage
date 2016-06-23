@@ -17,7 +17,7 @@
 
     defaults = {
       interval_ms: 15000,
-      initial_ether: 15000000000000000000,
+      initial_ether: 1000000000000000000,
       mine_pending_txns: false,
       mine_periodically: true,
       mine_normally: false,
