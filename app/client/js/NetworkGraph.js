@@ -2,6 +2,9 @@ import {EthereumNetwork} from './EthereumNetwork.js';
 
 const MICROBE = 'microbe';
 const MACROPHAGE = 'macrophage';
+const CONNECTION = 'connections';
+
+let networkGraph;
 
 class NetworkGraph {
   /*
@@ -16,6 +19,7 @@ class NetworkGraph {
     this.curNodesData = [];
     this._selectedMicrobe = null;
     this._selectedMacrophages = [];
+    this._selectedConnection = null;
     this._selectedRole = MICROBE;
     this.graphData = {nodes: [], links: []};
   }
@@ -28,6 +32,13 @@ class NetworkGraph {
     this.linksG = vis.append('g').attr('id', 'links');
     this.nodesG = vis.append('g').attr('id', 'nodes');
     this.messagesG = vis.append('g').attr('id', 'messages');
+    vis
+    .on('click', (d) => {
+      networkGraph.linksG.selectAll('line.mouselink').remove();
+      this._selectedConnection = null;
+      $('#networkGraph').unbind('mousemove');
+      this._updateDOM();
+    });
     this.force = d3.layout.force()
     .size([this.width, this.height])
     .charge(-500)
@@ -108,7 +119,6 @@ class NetworkGraph {
       return d.nodeID;
     });
 
-    let networkGraph = this;
     node.enter()
     .call((d) => {
       if(d[0].length > 0) {
@@ -125,6 +135,8 @@ class NetworkGraph {
     //.style('fill', (d) => { return this.nodeColors(d.artist); })
     //.style('stroke', (d) => { return this._strokeFor(d); })
     .style('stroke-width', 1.0)
+    .on('mousedown', function (d) {
+    })
     .on('click', (d) => {
       this.setSelectedNode(d);
     });
@@ -140,10 +152,10 @@ class NetworkGraph {
     .enter().append('line')
     .attr('class', 'link')
     .attr('stroke', '#ddd')
-    .attr('x1', (d) => { return d.source.x; })
-    .attr('y1', (d) => { return d.source.y; })
-    .attr('x2', (d) => { return d.target.x; })
-    .attr('y2', (d) => { return d.target.y; });
+    .attr('x1', (d) => d.source.x)
+    .attr('y1', (d) => d.source.y)
+    .attr('x2', (d) => d.target.x)
+    .attr('y2', (d) => d.target.y);
     link.exit().remove();
   }
 
@@ -290,6 +302,46 @@ class NetworkGraph {
         this._selectedMacrophages.push(selectedMacrophage);
         selectedMacrophage.attr('fill', '#f00');
       }
+    }else if(this._selectedRole.localeCompare(CONNECTION) === 0) {
+      if(this._selectedConnection) {
+        this._selectedConnection.data()[0].addPeer(selectedNode);
+        networkGraph.linksG.selectAll('line.mouselink').remove();
+        this._selectedConnection = null;
+        $('#networkGraph').unbind('mousemove');
+      }else {
+        let selectedConnection = this.nodesG.selectAll('circle.node')
+        .filter((d) => {
+          return selectedNode.nodeID.localeCompare(d.nodeID) == 0;
+        });
+
+        let link = networkGraph.linksG.selectAll('line.mouselink').data([selectedNode], (data) => {
+          return data.nodeID;
+        });
+        link
+        .enter().append('line')
+        .attr('class', 'mouselink')
+        .attr('stroke', '#0f0')
+        .attr('stroke-width', 4)
+        .attr('x1', () => selectedNode.x)
+        .attr('y1', () => selectedNode.y)
+        .attr('x2', () => selectedNode.x)
+        .attr('y2', () => selectedNode.y);
+        link.exit().remove();
+
+        $('#networkGraph').mousemove((event) => {
+          let x = event.pageX - $('#networkGraph').offset().left;
+          let y = event.pageY - $('#networkGraph').offset().top;
+
+          networkGraph.linksG.selectAll('line.mouselink')
+          .attr('x1', () => this._selectedConnection.data()[0].x)
+          .attr('y1', () => this._selectedConnection.data()[0].y)
+          .attr('x2', () => x)
+          .attr('y2', () => y);
+        });
+
+        this._selectedConnection = selectedConnection;
+        d3.event.stopPropagation();
+      }
     }
 
     this._updateDOM();
@@ -304,5 +356,5 @@ class NetworkGraph {
   }
 }
 
-let networkGraph = new NetworkGraph();
+networkGraph = new NetworkGraph();
 export {networkGraph, NetworkGraph};

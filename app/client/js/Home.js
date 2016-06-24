@@ -5,7 +5,7 @@ import {analysis} from './Analysis.js';
 
 const MICROBE = 'microbe';
 const MACROPHAGE = 'macrophage';
-const CONNECTIONS = 'connections';
+const CONNECTION = 'connections';
 
 let navbar = (
   <nav>
@@ -13,8 +13,9 @@ let navbar = (
   </nav>
 );
 
-//TODO: suppress this warning
+/*eslint-disable no-unused-vars*/
 let NodeButton = React.createClass({
+/*eslint-enable no-unused-vars*/
   onClick () {
     networkGraph.setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
   },
@@ -33,7 +34,7 @@ var Home = React.createClass({
     return {
       peerIDs:         EthereumNetwork.getNodeIDs(),
       shouldUpdateDOM: true,
-      role:                         MICROBE,
+      role:            MICROBE,
     };
   },
   componentWillMount () {
@@ -53,7 +54,6 @@ var Home = React.createClass({
   },
   addNode () {
     EthereumNetwork.createNode(false).then((newNode) => {
-      newNode.addPeer();
     });
   },
   addAllPeers () {
@@ -109,7 +109,7 @@ var Home = React.createClass({
               remove node
             </button>
             <button className="nodeAction" onClick={this.addAllPeers} disabled={!isNodeSelected}>
-              connect to peers
+              connect to all peers
             </button>
             <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
               send message
@@ -129,8 +129,8 @@ var Home = React.createClass({
               onChange={this.changeRole} value={MACROPHAGE}/>
             <label htmlFor="macrophageSelector" className="tgl-btn"></label>
             <input id="connectionsSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.role.localeCompare(CONNECTIONS) === 0 ? 'checked' : ''}
-              onChange={this.changeRole} value={CONNECTIONS}/>
+              checked={this.state.role.localeCompare(CONNECTION) === 0 ? 'checked' : ''}
+              onChange={this.changeRole} value={CONNECTION}/>
             <label htmlFor="connectionsSelector" className="tgl-btn"></label>
           </div>
         </main>
@@ -170,7 +170,7 @@ var Home = React.createClass({
       graphData.links = [].concat.apply([], peerLinks);
       networkGraph.updateGraphData(graphData);
     });
-  }
+  },
 });
 
 export {Home};
