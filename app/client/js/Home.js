@@ -6,6 +6,7 @@ import {analysis} from './Analysis.js';
 const MICROBE = 'microbe';
 const MACROPHAGE = 'macrophage';
 const CONNECTION = 'connections';
+const GODSNODE = 'godsnode';
 
 let navbar = (
   <nav>
@@ -132,6 +133,10 @@ var Home = React.createClass({
               checked={this.state.role.localeCompare(CONNECTION) === 0 ? 'checked' : ''}
               onChange={this.changeRole} value={CONNECTION}/>
             <label htmlFor="connectionsSelector" className="tgl-btn"></label>
+            <input id="godsnodeSelector" type="checkbox" className="tgl tgl-flat"
+              checked={this.state.role.localeCompare(GODSNODE) === 0 ? 'checked' : ''}
+              onChange={this.changeRole} value={GODSNODE}/>
+            <label htmlFor="godsnodeSelector" className="tgl-btn"></label>
           </div>
         </main>
 
@@ -168,7 +173,7 @@ var Home = React.createClass({
       let graphData = {};
       graphData.nodes = this.state.peerIDs;
       graphData.links = [].concat.apply([], peerLinks);
-      networkGraph.updateGraphData(graphData);
+      networkGraph.upsertGraphData(graphData);
     });
   },
 });

@@ -101,6 +101,9 @@ main {
       &#connectionsSelector {
         @include tglColorize(#22aa00, #aaa);
       }
+      &#godsnodeSelector {
+        @include tglColorize(#600094, #aaa);
+      }
 
       + .tgl-btn {
         margin: auto;

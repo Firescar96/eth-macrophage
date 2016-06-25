@@ -3,6 +3,7 @@ import {EthereumNetwork} from './EthereumNetwork.js';
 const MICROBE = 'microbe';
 const MACROPHAGE = 'macrophage';
 const CONNECTION = 'connections';
+const GODSNODE = 'godsnode';
 
 let networkGraph;
 
@@ -20,6 +21,7 @@ class NetworkGraph {
     this._selectedMicrobe = null;
     this._selectedMacrophages = [];
     this._selectedConnection = null;
+    this._selectedGodsnode = null;
     this._selectedRole = MICROBE;
     this.graphData = {nodes: [], links: []};
   }
@@ -33,16 +35,19 @@ class NetworkGraph {
     this.nodesG = vis.append('g').attr('id', 'nodes');
     this.messagesG = vis.append('g').attr('id', 'messages');
     vis
-    .on('click', (d) => {
+    .on('click', () => {
       networkGraph.linksG.selectAll('line.mouselink').remove();
+      //TODO: investigate if the following line is actually deleting the unfinished connections
+      //or whethere they are just becoming broken lines in the svg
       this._selectedConnection = null;
       $('#networkGraph').unbind('mousemove');
+      this._selectedGodsnode = null;
       this._updateDOM();
     });
     this.force = d3.layout.force()
     .size([this.width, this.height])
     .charge(-500)
-    .linkDistance(300)
+    .linkDistance(200)
     .on('tick', this._forceTick.bind(this));
     this._update();
   }
@@ -129,13 +134,17 @@ class NetworkGraph {
     })
     .append('circle')
     .attr('class', 'node')
-    .attr('cx', (d) => { return d.x; })
-    .attr('cy', (d) => { return d.y; })
-    .attr('r', (d) => { return d.r; })
+    .attr('cx', (d) => d.x)
+    .attr('cy', (d) => d.y)
+    .attr('r', (d) => d.r)
     //.style('fill', (d) => { return this.nodeColors(d.artist); })
     //.style('stroke', (d) => { return this._strokeFor(d); })
     .style('stroke-width', 1.0)
-    .on('mousedown', function (d) {
+    .on('mouseup', function (d) {
+      if(networkGraph._selectedRole.localeCompare(GODSNODE) === 0) {
+        $('#networkGraph').unbind('mousemove');
+        d3.event.stopPropagation();
+      }
     })
     .on('click', (d) => {
       this.setSelectedNode(d);
@@ -152,10 +161,27 @@ class NetworkGraph {
     .enter().append('line')
     .attr('class', 'link')
     .attr('stroke', '#ddd')
+    .style('stroke-width', 5)
     .attr('x1', (d) => d.source.x)
     .attr('y1', (d) => d.source.y)
     .attr('x2', (d) => d.target.x)
-    .attr('y2', (d) => d.target.y);
+    .attr('y2', (d) => d.target.y)
+    .on('click', (d) => {
+      if(this._selectedRole.localeCompare(CONNECTION) === 0) {
+        d.source.removePeer(d.target)
+        .then(() => {
+          return d.target.removePeer(d.source);
+        })
+        .then(() => {
+          this.graphData.links.forEach((curLink, i) => {
+            if(curLink === d) {
+              this.graphData.links.splice(i, 1);
+              this._update();
+            }
+          });
+        });
+      }
+    });
     link.exit().remove();
   }
 
@@ -174,7 +200,7 @@ class NetworkGraph {
   * call this with new data for the visualization
   * @param  {json} newData
   */
-  updateGraphData (newData) {
+  upsertGraphData (newData) {
     if(!newData.nodes || !newData.links) {
       return;
     }
@@ -340,6 +366,29 @@ class NetworkGraph {
         });
 
         this._selectedConnection = selectedConnection;
+        d3.event.stopPropagation();
+      }
+    }
+    if(networkGraph._selectedRole.localeCompare(GODSNODE) === 0) {
+      if(this._selectedGodsnode) {
+        this._selectedGodsnode.data()[0].addPeer(selectedNode);
+        this._selectedGodsnode = null;
+        $('#networkGraph').unbind('mousemove');
+      }else {
+        let godsNode = networkGraph.nodesG.selectAll('circle.node')
+        .filter((circleNode) => {
+          return selectedNode.nodeID.localeCompare(circleNode.nodeID) === 0;
+        });
+
+        $('#networkGraph').mousemove((event) => {
+          let x = event.pageX - $('#networkGraph').offset().left;
+          let y = event.pageY - $('#networkGraph').offset().top;
+          godsNode.data()[0].x = x;
+          godsNode.data()[0].y = y;
+          networkGraph._update();
+        });
+
+        this._selectedGodsnode = godsNode;
         d3.event.stopPropagation();
       }
     }

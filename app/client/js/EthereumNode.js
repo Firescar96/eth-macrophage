@@ -32,6 +32,10 @@ class EthereumNode {
         'name':   'addPeer',
         'call':   'admin_addPeer',
         'params': 1,
+      }), new web3._extend.Method({
+        'name':   'removePeer',
+        'call':   'admin_removePeer',
+        'params': 1,
       })],
     });
 
@@ -126,6 +130,19 @@ class EthereumNode {
     let defer = new Promise( (fufill, reject) => {
       Promise.all(addPeerPromises).then( () => {
         fufill();
+      });
+    });
+    return defer;
+  }
+
+  /*Removes a peer node. If no node is given adds the bootnode*/
+  removePeer (node) {
+    node = node || EthereumNetwork.getDefaultBootnode();
+    let defer = new Promise( (fufill, reject) => {
+      node.getNodeInfo().then(([err, nodeInfo]) => {
+        this.web3.admin.removePeer(nodeInfo.enode, ()=>{
+          fufill();
+        });
       });
     });
     return defer;
