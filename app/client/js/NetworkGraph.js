@@ -46,8 +46,8 @@ class NetworkGraph {
     });
     this.force = d3.layout.force()
     .size([this.width, this.height])
-    .charge(-500)
-    .linkDistance(200)
+    .charge(-1000)
+    .linkDistance(100)
     .on('tick', this._forceTick.bind(this));
     this._update();
   }

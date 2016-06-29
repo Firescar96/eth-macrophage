@@ -10,6 +10,8 @@ const GETH_BASE_PORT = 21000;
 const GETH_BASE_RPCPORT = 22000;
 const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
 
+const MAX_GETH_INSTANCES = 4;
+
 //have to publish this so the client can use it
 let _NetworkMemberIDs = new Mongo.Collection('networkMemberIDs');
 Meteor.publish('networkMemberIDs', () => {
@@ -36,11 +38,12 @@ exec('mkdir ' + GETH_BASE_DATADIR);
 var gethConfig = {
   bootnodes:     '""',
   datadir:       GETH_BASE_DATADIR,
+  dev:           1,
   genesis:       Assets.absoluteFilePath('genesis.json'),
   js:            Assets.absoluteFilePath('periodicmine.js'),
   logfile:       'log.log',
   minerthreads:  1,
-  maxpeers:      25,
+  maxpeers:      8,
   networkid:     35742222,
   password:      Assets.absoluteFilePath('password'),
   port:          GETH_BASE_PORT,
@@ -98,7 +101,7 @@ function createGethInstance (isMiner) {
     exec('geth --datadir=' + gethInstanceConfig.datadir +
     ' init ' + gethInstanceConfig.genesis, () => {
 
-      let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--logfile=' +
+      let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--dev', '--logfile=' +
       gethInstanceConfig.logfile, '--port=' + gethInstanceConfig.port, '--rpc', '--rpcport=' +
       gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr, '--rpcapi=' +
       gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
@@ -121,10 +124,15 @@ function createGethInstance (isMiner) {
 
 Meteor.methods({
   createGethInstance ({nonce, isMiner}) {
+    if(nonce >= MAX_GETH_INSTANCES) {
+      return {err: 'number of instances exceeded'};
+    }
+
     if(nonce >= curNonceState) {
       createGethInstance(isMiner);
-      return GETH_BASE_RPCPORT + (curNonceState - 1);
+      return {err: null, rpcport: GETH_BASE_RPCPORT + (curNonceState - 1)};
     }
-    return GETH_BASE_RPCPORT + nonce;
+    return {err: null, rpcport: GETH_BASE_RPCPORT + nonce};
   },
 });
+

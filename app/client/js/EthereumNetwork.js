@@ -53,8 +53,10 @@ EthereumNetwork.createNode = function (isMiner) {
     let newNode = new EthereumNode(currentNonce);
     Meteor.call('createGethInstance',
     {nonce: currentNonce, isMiner: isMiner},
-    (err, rpcport) => {
-      if(err) {
+    (callerr, {err, rpcport}) => {
+      if(callerr) {
+        console.error(callerr);
+      }else if(err) {
         console.error(err);
       }else {
         newNode.initializeConnection(rpcport)
