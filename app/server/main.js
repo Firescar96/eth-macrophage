@@ -8,7 +8,10 @@ const tailStream = require('tail-stream');
 
 const GETH_BASE_PORT = 21000;
 const GETH_BASE_RPCPORT = 22000;
-const GETH_BASE_DATADIR = '/tmp/eth-macrophage/';
+function getUserHome () {
+  return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+}
+const GETH_BASE_DATADIR = getUserHome() + '/.ethereum';
 
 const MAX_GETH_INSTANCES = 4;
 
@@ -36,22 +39,21 @@ exec('mkdir ' + GETH_BASE_DATADIR);
 
 //base configuration for a geth instance
 var gethConfig = {
-  bootnodes:     '""',
   datadir:       GETH_BASE_DATADIR,
-  dev:           1,
   genesis:       Assets.absoluteFilePath('genesis.json'),
   js:            Assets.absoluteFilePath('periodicmine.js'),
   logfile:       'log.log',
   minerthreads:  1,
-  maxpeers:      8,
-  networkid:     35742222,
+  maxpeers:      500,
+  networkid:     2,
   password:      Assets.absoluteFilePath('password'),
   port:          GETH_BASE_PORT,
   rpc:           true,
   rpcport:       GETH_BASE_RPCPORT,
   rpcaddr:       '0.0.0.0',
   rpcapi:        'admin,web3,eth,net',
-  rpccorsdomain: 'http://127.0.0.1:3000, http://localhost:3000, http://40.77.56.231:3000',
+  rpccorsdomain: '"http://127.0.0.1:3000, http://localhost:3000, http://40.77.56.231:3000"',
+  testnet:       true,
 };
 
 /**
@@ -68,7 +70,7 @@ function createGethInstance (isMiner) {
 
   gethInstanceConfig.port = GETH_BASE_PORT + curNonce;
   gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
-  gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
+  //gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
   gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
   gethInstanceConfig.js = isMiner ?
   Assets.absoluteFilePath('pendmine.js') : Assets.absoluteFilePath('periodicmine.js');
@@ -98,25 +100,25 @@ function createGethInstance (isMiner) {
 
   exec('geth --datadir=' + gethInstanceConfig.datadir + ' --password=' +
   gethInstanceConfig.password + ' account new', function () {
-    exec('geth --datadir=' + gethInstanceConfig.datadir +
-    ' init ' + gethInstanceConfig.genesis, () => {
+    //exec('geth --datadir=' + gethInstanceConfig.datadir +
+    //' init ' + gethInstanceConfig.genesis, () => {
 
-      let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--dev', '--logfile=' +
-      gethInstanceConfig.logfile, '--port=' + gethInstanceConfig.port, '--rpc', '--rpcport=' +
-      gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr, '--rpcapi=' +
-      gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
-      '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
-      '--password=' + gethInstanceConfig.password, '--bootnodes=' + gethInstanceConfig.bootnodes,
-      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', gethInstanceConfig.js]);
+    let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--logfile=' +
+    gethInstanceConfig.logfile, '--port=' + gethInstanceConfig.port, '--rpc', '--rpcport=' +
+    gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr, '--rpcapi=' +
+    gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
+    '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
+    '--password=' + gethInstanceConfig.password, '--testnet',
+    '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', gethInstanceConfig.js]);
 
-      //For some reason geth flips the out and err output..or something
-      cmd.stdout.on('data', (data) => {
-        console.log(data.toString());
-      });
-      cmd.stderr.on('data', (err) => {
-        console.error(err.toString());
-      });
+    //For some reason geth flips the out and err output..or something
+    cmd.stdout.on('data', (data) => {
+      console.log(data.toString());
     });
+    cmd.stderr.on('data', (err) => {
+      console.error(err.toString());
+    });
+    //});
   });
 
   curNonceState++;

@@ -1,9 +1,11 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
 import {Home} from './Home.js';
 import {mount} from 'react-mounter';
-const NUM_GETH_INSTANCES = 3;
-const APP_IP = '40.77.56.231';
-//const APP_IP = '127.0.0.1';
+const NUM_GETH_INSTANCES = 1;
+//const REMOTE_IP = '40.77.56.231';
+const LOCAL_IP = '127.0.0.1';
+
+const APP_IP = LOCAL_IP;
 
 //Configure to use the server instead of a local geth node
 let appURL = 'http://' + APP_IP + ':3000/';
@@ -13,6 +15,8 @@ _.each(['subscribe', 'methods', 'call', 'apply', 'status', 'reconnect', 'disconn
 function (name) {
   Meteor[name] = _.bind(Meteor.connection[name], Meteor.connection);
 });
+
+//Package.reload = APP_IP.localeCompare(LOCAL_IP) == 0;
 Package.reload = false;
 
 //Meteor.connection._stream._changeUrl(appURL);

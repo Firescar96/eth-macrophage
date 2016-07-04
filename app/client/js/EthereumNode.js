@@ -102,28 +102,28 @@ class EthereumNode {
   }
 
   /*Adds a peer node. If no node is given adds the bootnode*/
-  addPeer (node) {
-    node = node || EthereumNetwork.getDefaultBootnode();
+  addPeer (nodeID) {
+    nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
     let defer = new Promise( (fufill, reject) => {
-      node.getNodeInfo().then(([err, nodeInfo]) => {
-        this.web3.admin.addPeer(nodeInfo.enode, ()=>{
-          fufill();
-        });
+      this.web3.admin.addPeer(enode, ()=>{
+        fufill();
       });
     });
     return defer;
   }
 
-  /**
-  * Adds all the peers that have been created so far
-  */
+  /*Adds all the peers that have been created so far*/
   addAllPeers () {
     let addPeerPromises = [];
 
     EthereumNetwork.getNodeIDs().forEach((nodeID) => {
       let node = EthereumNetwork.getNodeByID(nodeID);
-      let defer = this.addPeer(node);
+      let defer  = new Promise( (fufill, reject) => {
+        node.getNodeInfo().then(([err, nodeInfo]) => {
 
+          this.addPeer(nodeInfo.id).then(() => fufill());
+        });
+      });
       addPeerPromises.push(defer);
     });
 
@@ -151,15 +151,6 @@ class EthereumNode {
   getPeers () {
     let defer = new Promise( (fufill, reject) => {
       this.web3.admin.getPeers( function (err, peers) {
-        peers = peers.map((peer) => {
-          return EthereumNetwork.getNodeByID(peer.id);
-        });
-
-        /*sometimes geth/web3 will return nodes that don't exist,
-        one way to remove them is to only allow nodes EthereumNetwork
-        already knows about*/
-        peers = peers.filter(Boolean);
-
         fufill([err, peers]);
       });
     });

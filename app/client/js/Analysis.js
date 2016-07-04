@@ -14,6 +14,8 @@ class Analysis {
   constructor () {
     this.txHashFrequency = {};
     this.txHashMessages = {};
+    this._networkNodeIDs = {};
+    this._microbeTxHashes = [];
 
     EthereumNetwork.getNodeIDs().map((nodeID) => {
       return EthereumNetwork.getNodeByID(nodeID);
@@ -32,9 +34,8 @@ class Analysis {
   }
 
   _update (targetNode, message) {
-    if(!EthereumNetwork.getNodeIDs().includes(message.from)) {
-      return;
-    }
+
+    this._networkNodeIDs[message.from] = true;
 
     if(!this.txHashFrequency[targetNode.nodeID][message.txHash]) {
       this.txHashFrequency[targetNode.nodeID][message.txHash] = 1;
@@ -53,6 +54,9 @@ class Analysis {
   * reset (clear) the storage maps and the collection of txs
   */
   reset () {
+    this._microbeTxHashes = [];
+    this._networkNodeIDs = {};
+
     Object.keys(this.txHashFrequency).forEach((nodeID) => {
       this.txHashFrequency[nodeID] = {};
     });
@@ -72,6 +76,10 @@ class Analysis {
 
   getPayloadHashFrequency () {
     return this.txHashFrequency;
+  }
+
+  addMicrobeTxHash (hash) {
+    this._microbeTxHashes.push(hash);
   }
 
   /**
@@ -96,7 +104,7 @@ class Analysis {
   withEM () {
     //it's very important to be able to handle missing data to work with
     //sorted data.
-    let sortedAllNodeIDs = EthereumNetwork.getNodeIDs().sort();
+    let sortedAllNodeIDs = Object.keys(this._networkNodeIDs).sort();
     let macrophageNodeIDs = networkGraph.getSelectedMacrophages().map((node) => node.nodeID);
     let evaluateNodeIDs = macrophageNodeIDs.length > 0 ?
     macrophageNodeIDs : Object.keys(this.txHashMessages);
@@ -107,6 +115,10 @@ class Analysis {
       .map((hash) => {
         return this.txHashMessages[targetNodeID][hash]
         .filter((message) => {
+          if(!this._microbeTxHashes.includes(message.txHash)) {
+            return false;
+          }
+
           return macrophageNodeIDs.every((macNodeID) => {
             return macNodeID.localeCompare(message.from) !== 0;
           });

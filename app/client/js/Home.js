@@ -103,7 +103,7 @@ var Home = React.createClass({
           </div>
 
           <div id="actionSidebar">
-            <button className="nodeAction" onClick={this.addNode}>
+            <button className="nodeAction" onClick={this.addNode} disabled>
               add node
             </button>
             <button className="nodeAction" disabled>
@@ -160,9 +160,9 @@ var Home = React.createClass({
       return new Promise((fufill, reject1) => {
         node.getPeers().then(([err, peers]) => {
           fufill(
-            peers.filter((peer) => this.state.peerIDs.includes(peer.nodeID))
+            peers.filter((peer) => this.state.peerIDs.includes(peer.id))
             .map((peer) => {
-              return {'source': node.nodeID, 'target': peer.nodeID};
+              return {'source': node.nodeID, 'target': peer.id};
             })
           );
         });
