@@ -1,9 +1,12 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
 import {networkGraph} from './NetworkGraph.js';
+require('./lib/lib.js');
 
 //this will be used as the minimum time for a message to be sent over the network
 //in graphs and calculations, data will be scaled to this instead of 0
 const MINIMUM_NETWORK_TIME = 1;
+const NETWORK_TIME_SCALE = 11;
+const PROB_THRESHOLD = .0001;
 
 /**
 *This class constains all the function available to do an Eth-Macrophage
@@ -33,8 +36,8 @@ class Analysis {
     });
   }
 
-  _update (targetNode, message) {
-
+  _update (targetNode, data) {
+    let message = data.data;
     this._networkNodeIDs[message.from] = true;
 
     if(!this.txHashFrequency[targetNode.nodeID][message.txHash]) {
@@ -68,9 +71,8 @@ class Analysis {
       return EthereumNetwork.getNodeByID(nodeID);
     })
     .forEach((node) => {
-      node.TxData.find().fetch().forEach((tx) => {
-        node.TxData.remove(tx._id);
-      });
+      Meteor.setServerURL(node.getServerURL());
+      Meteor.call('clearTxData', {nonce: node.id});
     });
   }
 
@@ -105,7 +107,7 @@ class Analysis {
     //it's very important to be able to handle missing data to work with
     //sorted data.
     let sortedAllNodeIDs = Object.keys(this._networkNodeIDs).sort();
-    let macrophageNodeIDs = networkGraph.getSelectedMacrophages().map((node) => node.nodeID);
+    let macrophageNodeIDs = EthereumNetwork.getMacrophages().map((node) => node.nodeID);
     let evaluateNodeIDs = macrophageNodeIDs.length > 0 ?
     macrophageNodeIDs : Object.keys(this.txHashMessages);
 
@@ -160,9 +162,12 @@ class Analysis {
       X = X.map((point) => {
         let baselineX = Math.min(...point.filter((p) => p)) - MINIMUM_NETWORK_TIME;
         return point.map((t) => {
-          return t ? t / baselineX : null;
+          return t ?
+          (Math.exp(Math.log(t) - Math.log(baselineX)) % 1 * Math.pow(10, NETWORK_TIME_SCALE)) :
+          null;
         });
       });
+
       //simulated input data
       //let X = [[1, 0.5, 0], [0.5, 1, 0], [1, 2, .2], [0.5, 1, 0], [0.2, 1, 0], [1, 0.2, 0]];
 
@@ -211,9 +216,14 @@ class Analysis {
       });
       });*/
 
+      //flatten the assignments if they are greater than the threshold
       let assignments = [];
       pjt.forEach((jt, j) => {
         jt.forEach((prob, i) => {
+          if(prob < PROB_THRESHOLD) {
+            return;
+          }
+
           assignments.push({
             assignor: data.nodeID,
             creator:  sortedAllNodeIDs[j],

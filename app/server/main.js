@@ -1,140 +1,163 @@
-import { Meteor } from 'meteor/meteor';
-import { Mongo } from 'meteor/mongo';
+exports = module.exports = function (server) {
+  const spawn = require('child_process').spawn;
+  const exec = require('child_process').exec;
+  const tailStream = require('tail-stream');
+  const WebSocketServer = require('ws').Server;
+  const wss = new WebSocketServer({ server: server });
+  const GETH_BASE_PORT = 23000;
+  const GETH_BASE_RPCPORT = 24000;
+  function getUserHome () {
+    return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+  }
+  const GETH_BASE_DATADIR = getUserHome() + '/.ethereum/';
+  const ASSETS_BASE_DATADIR = process.cwd() + '/private/';
+  const MAX_GETH_INSTANCES = 4;
 
-const spawn = Npm.require('child_process').spawn;
-const exec = Npm.require('child_process').exec;
+  //tracks how many instances have been created so far
+  let usedNonces = {};
 
-const tailStream = require('tail-stream');
+  //contains the log Collections for all the nodes
+  let txData = {};
 
-const GETH_BASE_PORT = 21000;
-const GETH_BASE_RPCPORT = 22000;
-function getUserHome () {
-  return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
-}
-const GETH_BASE_DATADIR = getUserHome() + '/.ethereum';
+  exec('mkdir ' + GETH_BASE_DATADIR);
+  //base configuration for a geth instance
+  var gethConfig = {
+    datadir:       GETH_BASE_DATADIR,
+    genesis:       ASSETS_BASE_DATADIR + 'genesis.json',
+    js:            ASSETS_BASE_DATADIR + 'periodicmine.js',
+    logfile:       'log.log',
+    minerthreads:  1,
+    maxpeers:      25,
+    networkid:     2,
+    password:      ASSETS_BASE_DATADIR + 'password',
+    port:          GETH_BASE_PORT,
+    rpc:           true,
+    rpcport:       GETH_BASE_RPCPORT,
+    rpcaddr:       '0.0.0.0',
+    rpcapi:        'admin,web3,eth,net',
+    rpccorsdomain: '"http://127.0.0.1:4000,http://localhost:4000,http://40.77.56.231:4000"',
+    testnet:       true,
+  };
 
-const MAX_GETH_INSTANCES = 4;
+  /**
+  * creates a new geth node and increments the curNonceState
+  * @return undefined
+  */
+  function createGethInstance (isMiner, nonce) {
+    let curNonce = nonce;
+    //need an instance so the callback below will use this version and not changes
+    let gethInstanceConfig = {};
+    for(let attr in gethConfig) {
+      if(gethConfig.hasOwnProperty(attr)) gethInstanceConfig[attr] = gethConfig[attr];
+    }
 
-//have to publish this so the client can use it
-let _NetworkMemberIDs = new Mongo.Collection('networkMemberIDs');
-Meteor.publish('networkMemberIDs', () => {
-  return _NetworkMemberIDs.find({});
-});
-_NetworkMemberIDs.allow({
-  insert: function (userId, doc) {
-    return true;
-  },
-  update: function (userId, doc, fields, modifier) {
-    return true;
-  },
-  remove: function (userId, doc) {
-    return true;
-  },
-});
+    gethInstanceConfig.port = GETH_BASE_PORT + curNonce;
+    gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
+    gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce + '/';
+    gethInstanceConfig.logfile = gethInstanceConfig.datadir + 'output.log';
+    gethInstanceConfig.js = ASSETS_BASE_DATADIR  + isMiner ? 'pendmine.js' : 'periodicmine.js';
 
-//tracks how many instances have been created so far
-let curNonceState = 0;
+    //this database is used on the client to get this node's received txs
+    //
+    txData[curNonce] = [];
+    wss.on('connection', function connection (conn) {
+      txData[curNonce].push(conn);
+      conn.on('close', function (code, reason) {
+        console.log(conn.host + ' Connection closed: ' + reason);
+      });
 
-exec('mkdir ' + GETH_BASE_DATADIR);
+      conn.on('error', (err) => {
+        //the client disappeared, and that's ok
+        //this should be an ETIMEDOUT error
+      });
+    });
+    console.log(wss);
+    //TODO: turn this callback into a promise
+    exec('mkdir ' + gethInstanceConfig.datadir);
+    exec('touch ' + gethInstanceConfig.logfile, () => {
+      let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
+      logStream.on('data', (data) => {
+        let messages = /\{.*\}/.exec(data);
+        if(!!messages && messages.length == 1) {
+          let message = JSON.parse(messages[0]);
+          if(message.txHash) {
+            let returnObj = {flag: 'txData', nonce: curNonce, data: message};
+            wss.clients.forEach((client) => {
+              client.send(JSON.stringify(returnObj));
+            });
+          }
+        }
+      });
+    });
 
-//base configuration for a geth instance
-var gethConfig = {
-  datadir:       GETH_BASE_DATADIR,
-  genesis:       Assets.absoluteFilePath('genesis.json'),
-  js:            Assets.absoluteFilePath('periodicmine.js'),
-  logfile:       'log.log',
-  minerthreads:  1,
-  maxpeers:      500,
-  networkid:     2,
-  password:      Assets.absoluteFilePath('password'),
-  port:          GETH_BASE_PORT,
-  rpc:           true,
-  rpcport:       GETH_BASE_RPCPORT,
-  rpcaddr:       '0.0.0.0',
-  rpcapi:        'admin,web3,eth,net',
-  rpccorsdomain: '"http://127.0.0.1:3000, http://localhost:3000, http://40.77.56.231:3000"',
-  testnet:       true,
-};
+    exec('geth --datadir=' + gethInstanceConfig.datadir + ' --testnet --password=' +
+    gethInstanceConfig.password + ' account new', function () {
+      //exec('geth --datadir=' + gethInstanceConfig.datadir +
+      //' init ' + gethInstanceConfig.genesis, () => {
 
-/**
-* creates a new geth node and increments the curNonceState
-* @return undefined
-*/
-function createGethInstance (isMiner) {
-  let curNonce = curNonceState;
-  //need an instance so the callback below will use this version and not changes
-  let gethInstanceConfig = {};
-  for(let attr in gethConfig) {
-    if(gethConfig.hasOwnProperty(attr)) gethInstanceConfig[attr] = gethConfig[attr];
+      let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir,
+      '--port=' + gethInstanceConfig.port, '--rpc', '--logfile=' + gethInstanceConfig.logfile,
+      '--rpcport=' + gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr,
+      '--rpcapi=' + gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
+      '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
+      '--password=' + gethInstanceConfig.password, '--testnet',
+      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js ' + gethInstanceConfig.js]);
+
+      //For some reason geth flips the out and err output..or something
+      cmd.stdout.on('data', (data) => {
+        console.log(data.toString());
+      });
+      cmd.stderr.on('data', (err) => {
+        console.error(err.toString());
+      });
+    });
+
+    usedNonces[nonce] = true;
   }
 
-  gethInstanceConfig.port = GETH_BASE_PORT + curNonce;
-  gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
-  //gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce;
-  gethInstanceConfig.logfile = gethInstanceConfig.datadir + '/output.log';
-  gethInstanceConfig.js = isMiner ?
-  Assets.absoluteFilePath('pendmine.js') : Assets.absoluteFilePath('periodicmine.js');
+  wss.on('connection', function connection (ws) {
+    ws.on('message', function incoming (data) {
+      console.log('received: %s', data);
+      data = JSON.parse(data);
+      switch (data.flag) {
+        case 'createGethInstance':
+          nonce = data.nonce;
+          isMiner = data.isMiner;
+          if(nonce >= MAX_GETH_INSTANCES) {
+            let returnObj = {
+              flag:        'createGethInstance',
+              uniqueIdent: data.uniqueIdent,
+              err:         'number of instances exceeded',
+            };
+            ws.send(JSON.stringify(returnObj));
+          }
 
-  //this database is used on the client to get this node's received txs
-  let TxData = new Mongo.Collection('txdata' + curNonce);
-  TxData.remove({});
-  Meteor.publish('txdata' + curNonce, () => {
-    return TxData.find({});
-  });
-
-  exec('mkdir ' + gethInstanceConfig.datadir);
-
-  //TODO: turn this callback into a promise
-  exec('touch ' + gethInstanceConfig.logfile, Meteor.bindEnvironment(() => {
-    let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
-    logStream.on('data', Meteor.bindEnvironment( (data) => {
-      let messages = /\{.*\}/.exec(data);
-      if(!!messages && messages.length == 1) {
-        let message = JSON.parse(messages[0]);
-        if(message.txHash) {
-          TxData.insert(message);
-        }
+          if(!usedNonces[nonce]) {
+            createGethInstance(isMiner, nonce);
+            let returnObj = {
+              flag:        'createGethInstance',
+              uniqueIdent: data.uniqueIdent,
+              err:         null,
+              rpcport:     GETH_BASE_RPCPORT + nonce,
+            };
+            ws.send(JSON.stringify(returnObj));
+            break;
+          }
+          let returnObj = {
+            flag:        'createGethInstance',
+            uniqueIdent: data.uniqueIdent,
+            err:         null,
+            rpcport:     GETH_BASE_RPCPORT + nonce,
+          };
+          ws.send(JSON.stringify(returnObj));
+          break;
+        case 'clearTxData':
+          nonce = data.nonce;
+          //   //TODO: save txData so the client can get it when they reconnect
+          //   //txData[nonce].remove({});
+          break;
+        default:
       }
-    }));
-  }));
-
-  exec('geth --datadir=' + gethInstanceConfig.datadir + ' --password=' +
-  gethInstanceConfig.password + ' account new', function () {
-    //exec('geth --datadir=' + gethInstanceConfig.datadir +
-    //' init ' + gethInstanceConfig.genesis, () => {
-
-    let cmd = spawn('geth', ['--datadir=' + gethInstanceConfig.datadir, '--logfile=' +
-    gethInstanceConfig.logfile, '--port=' + gethInstanceConfig.port, '--rpc', '--rpcport=' +
-    gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr, '--rpcapi=' +
-    gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
-    '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
-    '--password=' + gethInstanceConfig.password, '--testnet',
-    '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', gethInstanceConfig.js]);
-
-    //For some reason geth flips the out and err output..or something
-    cmd.stdout.on('data', (data) => {
-      console.log(data.toString());
     });
-    cmd.stderr.on('data', (err) => {
-      console.error(err.toString());
-    });
-    //});
   });
-
-  curNonceState++;
-}
-
-Meteor.methods({
-  createGethInstance ({nonce, isMiner}) {
-    if(nonce >= MAX_GETH_INSTANCES) {
-      return {err: 'number of instances exceeded'};
-    }
-
-    if(nonce >= curNonceState) {
-      createGethInstance(isMiner);
-      return {err: null, rpcport: GETH_BASE_RPCPORT + (curNonceState - 1)};
-    }
-    return {err: null, rpcport: GETH_BASE_RPCPORT + nonce};
-  },
-});
-
+};

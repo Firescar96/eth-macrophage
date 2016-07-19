@@ -1,12 +1,10 @@
 import React from 'react';
 import {networkGraph} from './NetworkGraph.js';
 import {messageGraph} from './MessageGraph.js';
+import {EthereumNetwork} from './EthereumNetwork.js';
 import {analysis} from './Analysis.js';
-
-const MICROBE = 'microbe';
-const MACROPHAGE = 'macrophage';
-const CONNECTION = 'connections';
-const GODSNODE = 'godsnode';
+import {MICROBE, MACROPHAGE, CONNECTION, GODSNODE} from './lib/globals.js';
+require('../sass/home.scss');
 
 let navbar = (
   <nav>
@@ -18,6 +16,15 @@ let navbar = (
 let NodeButton = React.createClass({
 /*eslint-enable no-unused-vars*/
   onClick () {
+    switch (this.props.role) {
+      case MICROBE:
+        EthereumNetwork.toggleMicrobe(EthereumNetwork.getNodeByID(this.props.nodeID));
+        break;
+      case MACROPHAGE:
+        EthereumNetwork.toggleMacrophage(EthereumNetwork.getNodeByID(this.props.nodeID));
+        break;
+      default:
+    }
     networkGraph.setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
   },
   render () {
@@ -35,7 +42,7 @@ var Home = React.createClass({
     return {
       peerIDs:         EthereumNetwork.getNodeIDs(),
       shouldUpdateDOM: true,
-      role:            MICROBE,
+      selectorType:    MICROBE,
     };
   },
   componentWillMount () {
@@ -58,18 +65,22 @@ var Home = React.createClass({
     });
   },
   addAllPeers () {
-    networkGraph.getSelectedMicrobe().addAllPeers();
+    EthereumNetwork.getSelectedMicrobe().addAllPeers();
   },
-  changeRole (event) {
-    this.setState({role: event.target.value, shouldUpdateDOM: true});
-    networkGraph.setSelectedRole(event.target.value);
+  changeSelectorType (event) {
+    this.setState({selectorType: event.target.value, shouldUpdateDOM: true});
+    networkGraph.setSelectorType(event.target.value);
   },
   sendMessage () {
-    let selectedNode = networkGraph.getSelectedMicrobe();
+    let selectedNode = EthereumNetwork.getMicrobe();
     selectedNode.sendTransaction({
       from:  selectedNode.defaultAccount,
       to:    '0x0000000000000000000000000000000000000000',
       value: 1,
+    })
+    .then(([err, result]) => {
+      console.log(result);
+      analysis.addMicrobeTxHash(result);
     });
   },
   runEMAnalysis () {
@@ -83,10 +94,10 @@ var Home = React.createClass({
   },
   render () {
     let nodeButtons = this.state.peerIDs.map((id) => {
-      return (<NodeButton key={id} nodeID={id}/>);
+      return (<NodeButton key={id} nodeID={id} selectedRole={this.state.selectorType}/>);
     });
 
-    let isNodeSelected = !!networkGraph.getSelectedMicrobe();
+    let isNodeSelected = !!EthereumNetwork.getMicrobe();
 
     return (
       <div>
@@ -122,20 +133,20 @@ var Home = React.createClass({
               reset analysis
             </button>
             <input id="microbeSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.role.localeCompare(MICROBE) === 0 ? 'checked' : ''}
-              onChange={this.changeRole} value={MICROBE}/>
+              checked={this.state.selectorType.localeCompare(MICROBE) === 0 ? 'checked' : ''}
+              onChange={this.changeSelectorType} value={MICROBE}/>
             <label htmlFor="microbeSelector" className="tgl-btn"></label>
             <input id="macrophageSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.role.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
-              onChange={this.changeRole} value={MACROPHAGE}/>
+              checked={this.state.selectorType.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
+              onChange={this.changeSelectorType} value={MACROPHAGE}/>
             <label htmlFor="macrophageSelector" className="tgl-btn"></label>
             <input id="connectionsSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.role.localeCompare(CONNECTION) === 0 ? 'checked' : ''}
-              onChange={this.changeRole} value={CONNECTION}/>
+              checked={this.state.selectorType.localeCompare(CONNECTION) === 0 ? 'checked' : ''}
+              onChange={this.changeSelectorType} value={CONNECTION}/>
             <label htmlFor="connectionsSelector" className="tgl-btn"></label>
             <input id="godsnodeSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.role.localeCompare(GODSNODE) === 0 ? 'checked' : ''}
-              onChange={this.changeRole} value={GODSNODE}/>
+              checked={this.state.selectorType.localeCompare(GODSNODE) === 0 ? 'checked' : ''}
+              onChange={this.changeSelectorType} value={GODSNODE}/>
             <label htmlFor="godsnodeSelector" className="tgl-btn"></label>
           </div>
         </main>
@@ -145,6 +156,7 @@ var Home = React.createClass({
   },
   componentDidMount () {
     networkGraph.init('#networkGraph', this.forceUpdate.bind(this));
+    networkGraph.setSelectorType(MICROBE);
     messageGraph.init('#messageGraph', this.forceUpdate.bind(this));
     this.setState({
       shouldUpdateDOM: false,

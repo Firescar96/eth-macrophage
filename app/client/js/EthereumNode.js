@@ -1,13 +1,62 @@
+import {EthereumNetwork} from './EthereumNetwork.js';
+
 class EthereumNode {
 
-  constructor (id) {
+  //TODO: for some reason using constructor doesn't work with nodejs
+  constructor (id, serverIP, serverPort) {
     this.id = id;
-    this.TxData = new Mongo.Collection('txdata' + id);
-    window.txdata = this.TxData;
+    this._serverIP = serverIP;
+    this._serverPort = serverPort;
+    this._txFilterCallbacks = [];
+    this._ws = new WebSocket('ws:' + this._serverIP + ':' + this._serverPort);
+    this._wsCallbacks = [];
+    this._ws.onopen = () => {}; //WebSocket might break without this line
+    this._ws.onmessage = (data) => {
+      data = JSON.parse(data.data);
+      switch (data.flag) {
+        case 'txData':
+          this._txFilterCallbacks.forEach((callback) => {
+            callback(this, data);
+          });
+          break;
+        default:
+          if(this._wsCallbacks[data.uniqueIdent]) {
+            this._wsCallbacks[data.uniqueIdent](this, data);
+            this._wsCallbacks.splice(data.uniqueIdent, 1);
+          }
+      }
+    };
     this.web3 = null;
     this.nodeID = '';
     this.filter = null;
     this.defaultAccount = null;
+    this._role = '';
+  }
+
+  getServerURL () {
+    return 'http://' + this._serverIP + ':' + this._serverPort;
+  }
+
+  setRole (_role) {
+    this._role = _role;
+  }
+
+  getRole () {
+    return this._role;
+  }
+
+  callWS (data, callback) {
+    data.uniqueIdent = this._wsCallbacks.length;
+    this._wsCallbacks.push(callback);
+    let waitForInit = setInterval(
+      () => {
+        if(this._ws.readyState) {
+          clearInterval(waitForInit);
+          this._ws.send(JSON.stringify(data));
+        }
+      },
+      500
+    );
   }
 
   /**
@@ -18,25 +67,31 @@ class EthereumNode {
   */
   initializeConnection (port) {
     let web3 = new Web3(new Web3.providers.HttpProvider('http://' +
-    EthereumNetwork.getIP() + ':' + port));
+    this._serverIP + ':' + port));
     web3._extend({
       'property': 'admin',
-      'methods':  [],
-      properties: [new web3._extend.Property({
-        'name':   'peers',
-        'getter': 'admin_peers',
-      }), new web3._extend.Property({
-        'name':   'nodeInfo',
-        'getter': 'admin_nodeInfo',
-      }), new web3._extend.Method({
+      'methods':  [new web3._extend.Method({
         'name':   'addPeer',
         'call':   'admin_addPeer',
         'params': 1,
-      }), new web3._extend.Method({
+      }),
+      new web3._extend.Method({
         'name':   'removePeer',
         'call':   'admin_removePeer',
         'params': 1,
-      })],
+      }),
+      new web3._extend.Method({
+        'name': 'findMorePeers',
+        'call': 'admin_findMorePeers',
+      }) ],
+      properties: [new web3._extend.Property({
+        'name':   'peers',
+        'getter': 'admin_peers',
+      }),
+      new web3._extend.Property({
+        'name':   'nodeInfo',
+        'getter': 'admin_nodeInfo',
+      }) ],
     });
 
     this.web3 = web3;
@@ -58,9 +113,6 @@ class EthereumNode {
         })
         .then(([err, accounts]) => {
           this.defaultAccount = accounts[0];
-
-          //have to make sure to subscribe after the record has been published on the server
-          Meteor.subscribe('txdata' + this.id);
           resolve(this);
         });
       }, 1000);
@@ -105,7 +157,7 @@ class EthereumNode {
   addPeer (nodeID) {
     nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
     let defer = new Promise( (fufill, reject) => {
-      this.web3.admin.addPeer(enode, ()=>{
+      this.web3.admin.addPeer(nodeID, (err, result)=>{
         fufill();
       });
     });
@@ -173,13 +225,9 @@ class EthereumNode {
   * @param  {Function} callback(this, theData)
   */
   txFilter (callback) {
-    this.TxData.find({}).observeChanges({
-      added: (id, data) => {
-        callback(this, data);
-      },
-    });
+    this._txFilterCallbacks.push(callback);
   }
 }
 
-window.EthereumNode = EthereumNode;
+//window.EthereumNode = EthereumNode
 export {EthereumNode};

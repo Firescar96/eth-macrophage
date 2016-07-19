@@ -1,114 +1,138 @@
+import {MICROBE} from './lib/globals.js';
+import {macrophageManager} from './MacrophageManager.js';
+import {EthereumNode} from './EthereumNode.js';
+
 class EthereumNetwork {}
 
 EthereumNetwork._ip = '127.0.0.1';
 //using multiple data structures to store nodeIDs for better lookup
 EthereumNetwork._members = {};
-EthereumNetwork._nodeIDCollection = new Mongo.Collection('networkMemberIDs');
-Meteor.subscribe('networkMemberIDs', () => {
-  EthereumNetwork._nodeIDCollection.find().forEach((data) => {
-    EthereumNetwork._nodeIDCollection.remove(data._id);
-  });
-});
+EthereumNetwork._nodeFilterCallbacks = [];
 
 EthereumNetwork._defaultBootnode;
 EthereumNetwork._currentNonce = 0;
 
-/**
- * sets the ip address of the server to connect to to manage nodes
- * @param {sting} ip
- */
-EthereumNetwork.setIP = function (ip) {
-  EthereumNetwork._ip = ip;
-};
-
-EthereumNetwork.getIP = function () {
-  return EthereumNetwork._ip;
-};
+EthereumNetwork._selectedMicrobe = null;
+EthereumNetwork.macrophageManager = macrophageManager;
 
 /**
- * get an array of all node IDs
- * @return {[string]}
- */
+* get an array of all node IDs
+* @return {[string]}
+*/
 EthereumNetwork.getNodeIDs = function () {
   return Object.keys(EthereumNetwork._members);
 };
 
 /**
- * get a singular EthereumNode
- * @param  {string} id
- * @return {EthereumNode}
- */
+* get a singular EthereumNode
+* @param  {string} id
+* @return {EthereumNode}
+*/
 EthereumNetwork.getNodeByID = function (id) {
   return EthereumNetwork._members[id];
 };
 
 /**
- * Does the work of creating an EthereumNode and fufils the Promise with
- * the node when complete
- * @return {Promise}
- */
-EthereumNetwork.createNode = function (isMiner) {
+* Does the work of creating an EthereumNode and fufils the Promise with
+* the node when complete
+* @return {Promise}
+*/
+EthereumNetwork.createNode = function (isMiner, serverIP, serverPort) {
   let currentNonce = EthereumNetwork._currentNonce++;
   let defer = new Promise((resolve, reject) => {
-    let newNode = new EthereumNode(currentNonce);
-    Meteor.call('createGethInstance',
-    {nonce: currentNonce, isMiner: isMiner},
-    (callerr, {err, rpcport}) => {
-      if(callerr) {
-        console.error(callerr);
-      }else if(err) {
-        console.error(err);
-      }else {
-        newNode.initializeConnection(rpcport)
-        .then( () => {
-          EthereumNetwork.addNode(newNode);
-          resolve(newNode);
-        });
+    let newNode = new EthereumNode(currentNonce, serverIP, serverPort);
+
+    newNode.callWS(
+      {flag: 'createGethInstance', nonce: currentNonce, isMiner: isMiner},
+      (node, {err, rpcport}) => {
+        if(err) {
+          console.error(err);
+        }else {
+          newNode.initializeConnection(rpcport)
+          .then( () => {
+            EthereumNetwork.addNode(newNode);
+            resolve(newNode);
+          });
+        }
       }
-    });
+    );
   });
 
   return defer;
 };
 
 /**
- * @param {EthereumNode} node
- */
+* @param {EthereumNode} node
+*/
 EthereumNetwork.addNode = function (node) {
   if(EthereumNetwork._members[node.nodeID]) {
     return;
   }
   EthereumNetwork._members[node.nodeID] = node;
-  EthereumNetwork._nodeIDCollection.insert({id: node.nodeID});
+
+  this._nodeFilterCallbacks.forEach((callback) => {
+    callback(node);
+  });
 };
 
 /**
- * @param {EthereumNode} bootnode
- */
+* @param {EthereumNode} bootnode
+*/
 EthereumNetwork.setDefaultBootnode = function (bootnode) {
   EthereumNetwork._defaultBootnode = bootnode;
 };
 
 /**
- * @return {EthereumNode}
- */
+* @return {EthereumNode}
+*/
 EthereumNetwork.getDefaultBootnode = function () {
   return EthereumNetwork._defaultBootnode;
 };
 
 /**
- * Provide a callback to be invoked whenever a new node is created
- * @param  {Function} callback(theNewNode)
- */
+* Provide a callback to be invoked whenever a new node is created
+* @param  {Function} callback(theNewNode)
+*/
 EthereumNetwork.nodeFilter = function (callback) {
-  EthereumNetwork._nodeIDCollection.find().observeChanges({
-    added: (id, data) => {
-      let ethereumNode = EthereumNetwork.getNodeByID(data.id);
-      if(ethereumNode) {
-        callback(ethereumNode);
-      }
-    },
+  EthereumNetwork._nodeFilterCallbacks.push(callback);
+};
+
+EthereumNetwork.toggleMicrobe = function (_microbe) {
+  if(_microbe.getRole() === MICROBE) {
+    this._selectedMicrobe = null;
+    _microbe.setRole('');
+    return;
+  }
+
+  let alreadySelected = false;
+  EthereumNetwork.getMacrophages().some((macrophage, i) => {
+    if(macrophage === this._selectedMicrobe) {
+      alreadySelected = true;
+      return;
+    }
   });
+  if(alreadySelected) {
+    return;
+  }
+
+  this._selectedMicrobe = _microbe;
+  _microbe.setRole(MICROBE);
+};
+
+EthereumNetwork.getMicrobe = function () {
+  return this._selectedMicrobe;
+};
+
+EthereumNetwork.toggleMacrophage = function (_macrophage) {
+  if(_macrophage === this._selectedMicrobe) {
+    return;
+  }
+
+  EthereumNetwork.macrophageManager.toggleMacrophage(_macrophage);
+};
+
+EthereumNetwork.getMacrophages = function () {
+  return EthereumNetwork.macrophageManager.getMacrophages();
 };
 
 window.EthereumNetwork = EthereumNetwork;

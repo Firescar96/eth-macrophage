@@ -12,10 +12,10 @@ class MessageGraph {
   */
   constructor (selection, updateDOM) {
     this.margin = {
-      top:    40,
+      top:    100,
       right:  40,
       bottom: 20,
-      left:   100,
+      left:   200,
     };
     this.width = 660;
     this.height = 500;
@@ -60,29 +60,28 @@ class MessageGraph {
     .map((data) => data.creator)
     .unique();
 
-    this.width = this.margin.left + this.margin.right + uniqueCreators.length * 80;
-    this.svg.attr('width', this.width);
-    this.messagesG.attr('width', this.width - this.margin.left - this.margin.right);
+    this.width = this.margin.left + this.margin.right + uniqueCreators.length * 5;
+    //this.messagesG.attr('width', this.width - this.margin.left - this.margin.right);
 
-    uniqueAssignors = this.messageData
+    let uniqueAssignors = this.messageData
     .map((data) => data.assignors);
 
     let uniqueHashes = this.messageData
     .map((data) => data.hash)
     .unique();
 
-    this.height = this.margin.top + this.margin.bottom + uniqueHashes.length * 20;
-    this.svg.attr('height', this.height);
-    this.messagesG.attr('height', this.height - this.margin.top - this.margin.bottom);
+    this.height = this.margin.top + this.margin.bottom + uniqueHashes.length * 5;
+    //this.messagesG.attr('height', this.height - this.margin.top - this.margin.bottom);
 
-    x = d3.scale.ordinal().domain(uniqueCreators)
-    .rangeRoundBands([this.margin.left, this.width - this.margin.left - this.margin.right], 0.1);
-    y = d3.scale.ordinal().domain(uniqueHashes)
-    .rangeRoundBands([this.margin.top, this.height - this.margin.top - this.margin.bottom], 0.1);
-    xAxis = d3.svg.axis().scale(x).orient('top')
+    let x = d3.scale.ordinal().domain(uniqueCreators)
+    .rangeRoundBands([0, this.width - this.margin.right], 0.1);
+    let y = d3.scale.ordinal().domain(uniqueHashes)
+    .rangeRoundBands([0, this.height - this.margin.bottom], 0.1);
+
+    let xAxis = d3.svg.axis().scale(x).orient('top')
     .tickSubdivide(true)
     .tickSize(0);
-    yAxis = d3.svg.axis().scale(y)
+    let yAxis = d3.svg.axis().scale(y)
     .orient('left')
     .tickSize(0);
 
@@ -99,12 +98,16 @@ class MessageGraph {
     .append('rect')
     .attr('rx', 5)
     .attr('ry', 5)
+    .attr('x', 0)
     .attr('y', 0)
     .attr('transform', rectTransform)
     .attr('width', (d) => x.rangeBand())
     .attr('height', (d) => y.rangeBand())
     .attr('fill', '#000')
-    .attr('fill-opacity', (d, i) => d.prob / uniqueAssignors[i].length)
+    .attr('fill-opacity', (d, i) => {
+      //console.log(d.prob / uniqueAssignors[i].length);
+      return d.prob / uniqueAssignors[i].length;
+    })
     .append('text')
     .text((d) => d.hash)
     /*.on('mouseover', function(e){
@@ -125,28 +128,27 @@ class MessageGraph {
     output.style.display = "none";}
     )*/;
 
-
-    rect.transition()
-    .attr('transform', rectTransform)
-    .attr('width', (d) => x.rangeBand())
-    .attr('height', (d) => y.rangeBand());
-
-    this.messagesG.select('.x-axis').remove();
-    this.messagesG.append('g')
+    this.svg.select('.x-axis').remove();
+    this.svg.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', 'translate(0, ' + this.margin.top / 2 + ')')
+    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 3/4 + ')')
     .transition()
     .call(xAxis)
     .selectAll('text')
     .attr('transform', 'rotate(-20)');
 
-    this.messagesG.select('.y-axis').remove();
-    this.messagesG.append('g')
+    this.svg.select('.y-axis').remove();
+    this.svg.append('g')
     .attr('class', 'y-axis')
-    .attr('transform', 'translate(' + this.margin.left + ', 0)')
+    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')')
     .transition()
-    .call(yAxis);
+    .call(yAxis)
+    .selectAll('text')
+    .attr('transform', 'rotate(-45)');
 
+    // this.svg
+    // .attr('height', this.messagesG.height)
+    // .attr('width', this.messagesG.width);
   }
 
   /**
