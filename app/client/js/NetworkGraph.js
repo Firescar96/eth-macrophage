@@ -6,7 +6,6 @@ const CONNECTION = 'connections';
 const GODSNODE = 'godsnode';
 
 let networkGraph;
-
 class NetworkGraph {
   /*
   selection: html element in which to inset the graph
@@ -147,6 +146,8 @@ class NetworkGraph {
       }
     })
     .on('click', (d) => {
+      console.log(d.nodeID);
+      debugger;
       this.setSelectedNode(d);
     });
     //this.node.on('mouseover', showDetails).on('mouseout', hideDetails);

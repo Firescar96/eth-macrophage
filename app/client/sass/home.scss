@@ -1,12 +1,20 @@
 @import "mixins";
 
-nav {
+$defaultFontColor: #4A4A4A;
+$heightColor: #a30000;
+$bgColor: #fff;
+$blue:  #00e0ff;
+
+header {
   h1 {
     display: block;
     padding: 20px 0;
     text-align: center;
   }
-
+  p{
+    text-align:center;
+    color: #4A4A4A;
+  }
   border-bottom: solid 2px black;
 }
 
@@ -15,15 +23,27 @@ main {
 
   div#nodeSidebar {
     float: left;
-    button.nodeReference {
+    button {
       display: block;
       position: relative;
-      margin: 10px;
+      margin: 20px 30px;
       padding: 0 5px;
       background-color: transparent;
-      border: solid 2px black;
+      border: solid 2px $defaultFontColor;
       outline: none;
       font-size: 24px;
+    }
+    button.nodeReference{
+      @extend button;
+      color: $defaultFontColor;
+    }
+    button.active{
+      @extend button;
+      color: $blue;
+    }
+    h2, p{
+      margin-left: 25px;
+      color: $defaultFontColor;
     }
   }
 
@@ -33,14 +53,15 @@ main {
 
   div#actionSidebar {
     float: right;
-
+    color: $defaultFontColor;
+    margin: 0 30px;
     button.nodeAction {
+      color: $defaultFontColor;
       display: block;
       position: relative;
-      margin: 10px;
-      padding: 0 5px;
+      margin: 20px 0;
       background-color: transparent;
-      border: solid 2px black;
+      border: solid 2px $defaultFontColor;
       outline: none;
       font-size: 24px;
     }
