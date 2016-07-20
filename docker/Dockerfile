@@ -44,4 +44,4 @@ EXPOSE 23000-23005
 EXPOSE 24000-24005
 
 ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["node", "app.js"]
+CMD ["npm", "start"]
