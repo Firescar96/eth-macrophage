@@ -71,7 +71,7 @@ exports = module.exports = function (server) {
         //this should be an ETIMEDOUT error
       });
     });
-    console.log(wss);
+
     //TODO: turn this callback into a promise
     exec('mkdir ' + gethInstanceConfig.datadir);
     exec('touch ' + gethInstanceConfig.logfile, () => {

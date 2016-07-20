@@ -8,8 +8,8 @@ class EthereumNode {
     this._serverIP = serverIP;
     this._serverPort = serverPort;
     this._txFilterCallbacks = [];
-    this._ws = new WebSocket('ws:' + this._serverIP + ':' + this._serverPort);
     this._wsCallbacks = [];
+    this._ws = new WebSocket('ws:' + this._serverIP + ':' + this._serverPort);
     this._ws.onopen = () => {}; //WebSocket might break without this line
     this._ws.onmessage = (data) => {
       data = JSON.parse(data.data);
@@ -47,10 +47,12 @@ class EthereumNode {
 
   callWS (data, callback) {
     data.uniqueIdent = this._wsCallbacks.length;
-    this._wsCallbacks.push(callback);
+    if(callback) {
+      this._wsCallbacks.push(callback);
+    }
     let waitForInit = setInterval(
       () => {
-        if(this._ws.readyState) {
+        if(this._ws && this._ws.readyState) {
           clearInterval(waitForInit);
           this._ws.send(JSON.stringify(data));
         }

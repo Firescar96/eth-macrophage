@@ -14,9 +14,7 @@ EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((boot
 
   EthereumNetwork.setDefaultBootnode(bootnode);
   let createNodePromises = [];
-  let test = 0;
   MACROPHAGE_ADDRS.forEach((macrophageAddr) => {
-    test = 1;
     let defer = new Promise((resolve, reject) => {
       EthereumNetwork.createNode(false, macrophageAddr.ip, macrophageAddr.port)
       .then( (newNode) => {

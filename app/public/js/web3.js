@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Web3 = __webpack_require__(241);
+	var Web3 = __webpack_require__(240);
 
 	// dont override global variable
 	if (typeof window !== 'undefined' && typeof window.Web3 === 'undefined') {
@@ -294,8 +294,7 @@
 /* 237 */,
 /* 238 */,
 /* 239 */,
-/* 240 */,
-/* 241 */
+/* 240 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -325,22 +324,22 @@
 	 * @date 2014
 	 */
 
-	var RequestManager = __webpack_require__(242);
-	var Iban = __webpack_require__(285);
-	var Eth = __webpack_require__(286);
-	var DB = __webpack_require__(315);
-	var Shh = __webpack_require__(316);
-	var Net = __webpack_require__(317);
-	var Personal = __webpack_require__(318);
-	var Settings = __webpack_require__(319);
-	var version = __webpack_require__(320);
-	var utils = __webpack_require__(244);
-	var sha3 = __webpack_require__(246);
-	var extend = __webpack_require__(321);
-	var Batch = __webpack_require__(322);
-	var Property = __webpack_require__(289);
-	var HttpProvider = __webpack_require__(323);
-	var IpcProvider = __webpack_require__(325);
+	var RequestManager = __webpack_require__(241);
+	var Iban = __webpack_require__(284);
+	var Eth = __webpack_require__(285);
+	var DB = __webpack_require__(314);
+	var Shh = __webpack_require__(315);
+	var Net = __webpack_require__(316);
+	var Personal = __webpack_require__(317);
+	var Settings = __webpack_require__(318);
+	var version = __webpack_require__(319);
+	var utils = __webpack_require__(243);
+	var sha3 = __webpack_require__(245);
+	var extend = __webpack_require__(320);
+	var Batch = __webpack_require__(321);
+	var Property = __webpack_require__(288);
+	var HttpProvider = __webpack_require__(322);
+	var IpcProvider = __webpack_require__(324);
 
 
 
@@ -447,7 +446,7 @@
 
 
 /***/ },
-/* 242 */
+/* 241 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -476,10 +475,10 @@
 	 * @date 2014
 	 */
 
-	var Jsonrpc = __webpack_require__(243);
-	var utils = __webpack_require__(244);
-	var c = __webpack_require__(283);
-	var errors = __webpack_require__(284);
+	var Jsonrpc = __webpack_require__(242);
+	var utils = __webpack_require__(243);
+	var c = __webpack_require__(282);
+	var errors = __webpack_require__(283);
 
 	/**
 	 * It's responsible for passing messages to providers
@@ -718,7 +717,7 @@
 
 
 /***/ },
-/* 243 */
+/* 242 */
 /***/ function(module, exports) {
 
 	/*
@@ -815,7 +814,7 @@
 
 
 /***/ },
-/* 244 */
+/* 243 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -854,9 +853,9 @@
 	 */
 
 
-	var BigNumber = __webpack_require__(245);
-	var sha3 = __webpack_require__(246);
-	var utf8 = __webpack_require__(281);
+	var BigNumber = __webpack_require__(244);
+	var sha3 = __webpack_require__(245);
+	var utf8 = __webpack_require__(280);
 
 	var unitMap = {
 	    'noether':      '0',    
@@ -1418,7 +1417,7 @@
 
 
 /***/ },
-/* 245 */
+/* 244 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/*! bignumber.js v2.0.7 https://github.com/MikeMcl/bignumber.js/LICENCE */
@@ -4107,7 +4106,7 @@
 
 
 /***/ },
-/* 246 */
+/* 245 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -4132,8 +4131,8 @@
 	 * @date 2015
 	 */
 
-	var CryptoJS = __webpack_require__(247);
-	var sha3 = __webpack_require__(259);
+	var CryptoJS = __webpack_require__(246);
+	var sha3 = __webpack_require__(258);
 
 	module.exports = function (value, options) {
 	    if (options && options.encoding === 'hex') {
@@ -4151,13 +4150,13 @@
 
 
 /***/ },
-/* 247 */
+/* 246 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(249), __webpack_require__(250), __webpack_require__(251), __webpack_require__(252), __webpack_require__(253), __webpack_require__(254), __webpack_require__(255), __webpack_require__(256), __webpack_require__(257), __webpack_require__(258), __webpack_require__(259), __webpack_require__(260), __webpack_require__(261), __webpack_require__(262), __webpack_require__(263), __webpack_require__(264), __webpack_require__(265), __webpack_require__(266), __webpack_require__(267), __webpack_require__(268), __webpack_require__(269), __webpack_require__(270), __webpack_require__(271), __webpack_require__(272), __webpack_require__(273), __webpack_require__(274), __webpack_require__(275), __webpack_require__(276), __webpack_require__(277), __webpack_require__(278), __webpack_require__(279), __webpack_require__(280));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(248), __webpack_require__(249), __webpack_require__(250), __webpack_require__(251), __webpack_require__(252), __webpack_require__(253), __webpack_require__(254), __webpack_require__(255), __webpack_require__(256), __webpack_require__(257), __webpack_require__(258), __webpack_require__(259), __webpack_require__(260), __webpack_require__(261), __webpack_require__(262), __webpack_require__(263), __webpack_require__(264), __webpack_require__(265), __webpack_require__(266), __webpack_require__(267), __webpack_require__(268), __webpack_require__(269), __webpack_require__(270), __webpack_require__(271), __webpack_require__(272), __webpack_require__(273), __webpack_require__(274), __webpack_require__(275), __webpack_require__(276), __webpack_require__(277), __webpack_require__(278), __webpack_require__(279));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -4174,7 +4173,7 @@
 	}));
 
 /***/ },
-/* 248 */
+/* 247 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
@@ -4921,13 +4920,13 @@
 	}));
 
 /***/ },
-/* 249 */
+/* 248 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -5230,13 +5229,13 @@
 	}));
 
 /***/ },
-/* 250 */
+/* 249 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -5311,13 +5310,13 @@
 	}));
 
 /***/ },
-/* 251 */
+/* 250 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -5465,13 +5464,13 @@
 	}));
 
 /***/ },
-/* 252 */
+/* 251 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -5594,13 +5593,13 @@
 	}));
 
 /***/ },
-/* 253 */
+/* 252 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -5867,13 +5866,13 @@
 	}));
 
 /***/ },
-/* 254 */
+/* 253 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -6022,13 +6021,13 @@
 	}));
 
 /***/ },
-/* 255 */
+/* 254 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -6226,13 +6225,13 @@
 	}));
 
 /***/ },
-/* 256 */
+/* 255 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(255));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(254));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -6311,13 +6310,13 @@
 	}));
 
 /***/ },
-/* 257 */
+/* 256 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(249));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(248));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -6639,13 +6638,13 @@
 	}));
 
 /***/ },
-/* 258 */
+/* 257 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(249), __webpack_require__(257));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(248), __webpack_require__(256));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -6727,13 +6726,13 @@
 	}));
 
 /***/ },
-/* 259 */
+/* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(249));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(248));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -7055,13 +7054,13 @@
 	}));
 
 /***/ },
-/* 260 */
+/* 259 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -7327,13 +7326,13 @@
 	}));
 
 /***/ },
-/* 261 */
+/* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -7475,13 +7474,13 @@
 	}));
 
 /***/ },
-/* 262 */
+/* 261 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(254), __webpack_require__(261));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(253), __webpack_require__(260));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -7625,13 +7624,13 @@
 	}));
 
 /***/ },
-/* 263 */
+/* 262 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(254), __webpack_require__(261));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(253), __webpack_require__(260));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -7762,13 +7761,13 @@
 	}));
 
 /***/ },
-/* 264 */
+/* 263 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248));
+			module.exports = exports = factory(__webpack_require__(247));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -8642,13 +8641,13 @@
 	}));
 
 /***/ },
-/* 265 */
+/* 264 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -8725,13 +8724,13 @@
 	}));
 
 /***/ },
-/* 266 */
+/* 265 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -8788,13 +8787,13 @@
 	}));
 
 /***/ },
-/* 267 */
+/* 266 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -8909,13 +8908,13 @@
 	}));
 
 /***/ },
-/* 268 */
+/* 267 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -8968,13 +8967,13 @@
 	}));
 
 /***/ },
-/* 269 */
+/* 268 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9013,13 +9012,13 @@
 	}));
 
 /***/ },
-/* 270 */
+/* 269 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9067,13 +9066,13 @@
 	}));
 
 /***/ },
-/* 271 */
+/* 270 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9116,13 +9115,13 @@
 	}));
 
 /***/ },
-/* 272 */
+/* 271 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9161,13 +9160,13 @@
 	}));
 
 /***/ },
-/* 273 */
+/* 272 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9211,13 +9210,13 @@
 	}));
 
 /***/ },
-/* 274 */
+/* 273 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9246,13 +9245,13 @@
 	}));
 
 /***/ },
-/* 275 */
+/* 274 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9317,13 +9316,13 @@
 	}));
 
 /***/ },
-/* 276 */
+/* 275 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(252), __webpack_require__(253), __webpack_require__(263), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(251), __webpack_require__(252), __webpack_require__(262), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -9549,13 +9548,13 @@
 	}));
 
 /***/ },
-/* 277 */
+/* 276 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(252), __webpack_require__(253), __webpack_require__(263), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(251), __webpack_require__(252), __webpack_require__(262), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -10324,13 +10323,13 @@
 	}));
 
 /***/ },
-/* 278 */
+/* 277 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(252), __webpack_require__(253), __webpack_require__(263), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(251), __webpack_require__(252), __webpack_require__(262), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -10468,13 +10467,13 @@
 	}));
 
 /***/ },
-/* 279 */
+/* 278 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(252), __webpack_require__(253), __webpack_require__(263), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(251), __webpack_require__(252), __webpack_require__(262), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -10665,13 +10664,13 @@
 	}));
 
 /***/ },
-/* 280 */
+/* 279 */
 /***/ function(module, exports, __webpack_require__) {
 
 	;(function (root, factory, undef) {
 		if (true) {
 			// CommonJS
-			module.exports = exports = factory(__webpack_require__(248), __webpack_require__(252), __webpack_require__(253), __webpack_require__(263), __webpack_require__(264));
+			module.exports = exports = factory(__webpack_require__(247), __webpack_require__(251), __webpack_require__(252), __webpack_require__(262), __webpack_require__(263));
 		}
 		else if (typeof define === "function" && define.amd) {
 			// AMD
@@ -10860,7 +10859,7 @@
 	}));
 
 /***/ },
-/* 281 */
+/* 280 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! https://mths.be/utf8js v2.0.0 by @mathias */
@@ -11106,10 +11105,10 @@
 
 	}(this));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(282)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(281)(module), (function() { return this; }())))
 
 /***/ },
-/* 282 */
+/* 281 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -11125,7 +11124,7 @@
 
 
 /***/ },
-/* 283 */
+/* 282 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -11165,7 +11164,7 @@
 
 
 	/// required to define ETH_BIGNUMBER_ROUNDING_MODE
-	var BigNumber = __webpack_require__(245);
+	var BigNumber = __webpack_require__(244);
 
 	var ETH_UNITS = [
 	    'wei',
@@ -11210,7 +11209,7 @@
 
 
 /***/ },
-/* 284 */
+/* 283 */
 /***/ function(module, exports) {
 
 	/*
@@ -11254,7 +11253,7 @@
 
 
 /***/ },
-/* 285 */
+/* 284 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -11279,7 +11278,7 @@
 	 * @date 2015
 	 */
 
-	var BigNumber = __webpack_require__(245);
+	var BigNumber = __webpack_require__(244);
 
 	var padLeft = function (string, bytes) {
 	    var result = string;
@@ -11487,7 +11486,7 @@
 
 
 /***/ },
-/* 286 */
+/* 285 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -11515,18 +11514,18 @@
 
 	"use strict";
 
-	var formatters = __webpack_require__(287);
-	var utils = __webpack_require__(244);
-	var Method = __webpack_require__(288);
-	var Property = __webpack_require__(289);
-	var c = __webpack_require__(283);
-	var Contract = __webpack_require__(290);
-	var watches = __webpack_require__(306);
-	var Filter = __webpack_require__(305);
-	var IsSyncing = __webpack_require__(309);
-	var namereg = __webpack_require__(310);
-	var Iban = __webpack_require__(285);
-	var transfer = __webpack_require__(313);
+	var formatters = __webpack_require__(286);
+	var utils = __webpack_require__(243);
+	var Method = __webpack_require__(287);
+	var Property = __webpack_require__(288);
+	var c = __webpack_require__(282);
+	var Contract = __webpack_require__(289);
+	var watches = __webpack_require__(305);
+	var Filter = __webpack_require__(304);
+	var IsSyncing = __webpack_require__(308);
+	var namereg = __webpack_require__(309);
+	var Iban = __webpack_require__(284);
+	var transfer = __webpack_require__(312);
 
 	var blockCall = function (args) {
 	    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? "eth_getBlockByHash" : "eth_getBlockByNumber";
@@ -11836,7 +11835,7 @@
 
 
 /***/ },
-/* 287 */
+/* 286 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -11862,9 +11861,9 @@
 	 * @date 2015
 	 */
 
-	var utils = __webpack_require__(244);
-	var config = __webpack_require__(283);
-	var Iban = __webpack_require__(285);
+	var utils = __webpack_require__(243);
+	var config = __webpack_require__(282);
+	var Iban = __webpack_require__(284);
 
 	/**
 	 * Should the format output to a big number
@@ -12141,7 +12140,7 @@
 
 
 /***/ },
-/* 288 */
+/* 287 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -12166,8 +12165,8 @@
 	 * @date 2015
 	 */
 
-	var utils = __webpack_require__(244);
-	var errors = __webpack_require__(284);
+	var utils = __webpack_require__(243);
+	var errors = __webpack_require__(283);
 
 	var Method = function (options) {
 	    this.name = options.name;
@@ -12312,7 +12311,7 @@
 
 
 /***/ },
-/* 289 */
+/* 288 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -12338,7 +12337,7 @@
 	 * @date 2015
 	 */
 
-	var utils = __webpack_require__(244);
+	var utils = __webpack_require__(243);
 
 	var Property = function (options) {
 	    this.name = options.name;
@@ -12462,7 +12461,7 @@
 
 
 /***/ },
-/* 290 */
+/* 289 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -12487,11 +12486,11 @@
 	 * @date 2014
 	 */
 
-	var utils = __webpack_require__(244);
-	var coder = __webpack_require__(291);
-	var SolidityEvent = __webpack_require__(304);
-	var SolidityFunction = __webpack_require__(307);
-	var AllEvents = __webpack_require__(308);
+	var utils = __webpack_require__(243);
+	var coder = __webpack_require__(290);
+	var SolidityEvent = __webpack_require__(303);
+	var SolidityFunction = __webpack_require__(306);
+	var AllEvents = __webpack_require__(307);
 
 	/**
 	 * Should be called to encode constructor params
@@ -12766,7 +12765,7 @@
 
 
 /***/ },
-/* 291 */
+/* 290 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -12791,17 +12790,17 @@
 	 * @date 2015
 	 */
 
-	var f = __webpack_require__(292);
+	var f = __webpack_require__(291);
 
-	var SolidityTypeAddress = __webpack_require__(294);
-	var SolidityTypeBool = __webpack_require__(296);
-	var SolidityTypeInt = __webpack_require__(297);
-	var SolidityTypeUInt = __webpack_require__(298);
-	var SolidityTypeDynamicBytes = __webpack_require__(299);
-	var SolidityTypeString = __webpack_require__(300);
-	var SolidityTypeReal = __webpack_require__(301);
-	var SolidityTypeUReal = __webpack_require__(302);
-	var SolidityTypeBytes = __webpack_require__(303);
+	var SolidityTypeAddress = __webpack_require__(293);
+	var SolidityTypeBool = __webpack_require__(295);
+	var SolidityTypeInt = __webpack_require__(296);
+	var SolidityTypeUInt = __webpack_require__(297);
+	var SolidityTypeDynamicBytes = __webpack_require__(298);
+	var SolidityTypeString = __webpack_require__(299);
+	var SolidityTypeReal = __webpack_require__(300);
+	var SolidityTypeUReal = __webpack_require__(301);
+	var SolidityTypeBytes = __webpack_require__(302);
 
 	/**
 	 * SolidityCoder prototype should be used to encode/decode solidity params of any type
@@ -13032,7 +13031,7 @@
 
 
 /***/ },
-/* 292 */
+/* 291 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13057,10 +13056,10 @@
 	 * @date 2015
 	 */
 
-	var BigNumber = __webpack_require__(245);
-	var utils = __webpack_require__(244);
-	var c = __webpack_require__(283);
-	var SolidityParam = __webpack_require__(293);
+	var BigNumber = __webpack_require__(244);
+	var utils = __webpack_require__(243);
+	var c = __webpack_require__(282);
+	var SolidityParam = __webpack_require__(292);
 
 
 	/**
@@ -13288,7 +13287,7 @@
 
 
 /***/ },
-/* 293 */
+/* 292 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13313,7 +13312,7 @@
 	 * @date 2015
 	 */
 
-	var utils = __webpack_require__(244);
+	var utils = __webpack_require__(243);
 
 	/**
 	 * SolidityParam object prototype.
@@ -13446,11 +13445,11 @@
 
 
 /***/ },
-/* 294 */
+/* 293 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeAddress is a prootype that represents address type
@@ -13483,11 +13482,11 @@
 
 
 /***/ },
-/* 295 */
+/* 294 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityParam = __webpack_require__(293);
+	var f = __webpack_require__(291);
+	var SolidityParam = __webpack_require__(292);
 
 	/**
 	 * SolidityType prototype is used to encode/decode solidity params of certain type
@@ -13734,11 +13733,11 @@
 
 
 /***/ },
-/* 296 */
+/* 295 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeBool is a prootype that represents bool type
@@ -13770,11 +13769,11 @@
 
 
 /***/ },
-/* 297 */
+/* 296 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeInt is a prootype that represents int type
@@ -13812,11 +13811,11 @@
 
 
 /***/ },
-/* 298 */
+/* 297 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeUInt is a prootype that represents uint type
@@ -13854,11 +13853,11 @@
 
 
 /***/ },
-/* 299 */
+/* 298 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	var SolidityTypeDynamicBytes = function () {
 	    this._inputFormatter = f.formatInputDynamicBytes;
@@ -13885,11 +13884,11 @@
 
 
 /***/ },
-/* 300 */
+/* 299 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	var SolidityTypeString = function () {
 	    this._inputFormatter = f.formatInputString;
@@ -13916,11 +13915,11 @@
 
 
 /***/ },
-/* 301 */
+/* 300 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeReal is a prootype that represents real type
@@ -13958,11 +13957,11 @@
 
 
 /***/ },
-/* 302 */
+/* 301 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeUReal is a prootype that represents ureal type
@@ -14000,11 +13999,11 @@
 
 
 /***/ },
-/* 303 */
+/* 302 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var f = __webpack_require__(292);
-	var SolidityType = __webpack_require__(295);
+	var f = __webpack_require__(291);
+	var SolidityType = __webpack_require__(294);
 
 	/**
 	 * SolidityTypeBytes is a prootype that represents bytes type
@@ -14044,7 +14043,7 @@
 
 
 /***/ },
-/* 304 */
+/* 303 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -14069,12 +14068,12 @@
 	 * @date 2014
 	 */
 
-	var utils = __webpack_require__(244);
-	var coder = __webpack_require__(291);
-	var formatters = __webpack_require__(287);
-	var sha3 = __webpack_require__(246);
-	var Filter = __webpack_require__(305);
-	var watches = __webpack_require__(306);
+	var utils = __webpack_require__(243);
+	var coder = __webpack_require__(290);
+	var formatters = __webpack_require__(286);
+	var sha3 = __webpack_require__(245);
+	var Filter = __webpack_require__(304);
+	var watches = __webpack_require__(305);
 
 	/**
 	 * This prototype should be used to create event filters
@@ -14258,7 +14257,7 @@
 
 
 /***/ },
-/* 305 */
+/* 304 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -14287,8 +14286,8 @@
 	 * @date 2014
 	 */
 
-	var formatters = __webpack_require__(287);
-	var utils = __webpack_require__(244);
+	var formatters = __webpack_require__(286);
+	var utils = __webpack_require__(243);
 
 	/**
 	* Converts a given topic to a hex string, but also allows null values.
@@ -14494,7 +14493,7 @@
 
 
 /***/ },
-/* 306 */
+/* 305 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -14519,7 +14518,7 @@
 	 * @date 2015
 	 */
 
-	var Method = __webpack_require__(288);
+	var Method = __webpack_require__(287);
 
 	/// @returns an array of objects describing web3.eth.filter api methods
 	var eth = function () {
@@ -14614,7 +14613,7 @@
 
 
 /***/ },
-/* 307 */
+/* 306 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -14639,10 +14638,10 @@
 	 * @date 2015
 	 */
 
-	var coder = __webpack_require__(291);
-	var utils = __webpack_require__(244);
-	var formatters = __webpack_require__(287);
-	var sha3 = __webpack_require__(246);
+	var coder = __webpack_require__(290);
+	var utils = __webpack_require__(243);
+	var formatters = __webpack_require__(286);
+	var sha3 = __webpack_require__(245);
 
 	/**
 	 * This prototype should be used to call/sendTransaction to solidity functions
@@ -14867,7 +14866,7 @@
 
 
 /***/ },
-/* 308 */
+/* 307 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -14892,12 +14891,12 @@
 	 * @date 2014
 	 */
 
-	var sha3 = __webpack_require__(246);
-	var SolidityEvent = __webpack_require__(304);
-	var formatters = __webpack_require__(287);
-	var utils = __webpack_require__(244);
-	var Filter = __webpack_require__(305);
-	var watches = __webpack_require__(306);
+	var sha3 = __webpack_require__(245);
+	var SolidityEvent = __webpack_require__(303);
+	var formatters = __webpack_require__(286);
+	var utils = __webpack_require__(243);
+	var Filter = __webpack_require__(304);
+	var watches = __webpack_require__(305);
 
 	var AllSolidityEvents = function (requestManager, json, address) {
 	    this._requestManager = requestManager;
@@ -14961,7 +14960,7 @@
 
 
 /***/ },
-/* 309 */
+/* 308 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -14986,8 +14985,8 @@
 	 * @date 2015
 	 */
 
-	var formatters = __webpack_require__(287);
-	var utils = __webpack_require__(244);
+	var formatters = __webpack_require__(286);
+	var utils = __webpack_require__(243);
 
 	var count = 1;
 
@@ -15060,7 +15059,7 @@
 
 
 /***/ },
-/* 310 */
+/* 309 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -15085,8 +15084,8 @@
 	 * @date 2015
 	 */
 
-	var globalRegistrarAbi = __webpack_require__(311);
-	var icapRegistrarAbi= __webpack_require__(312);
+	var globalRegistrarAbi = __webpack_require__(310);
+	var icapRegistrarAbi= __webpack_require__(311);
 
 	var globalNameregAddress = '0xc6d9d2cd449a754c494264e1809c50e34d64562b';
 	var icapNameregAddress = '0xa1a111bc074c9cfa781f0c38e63bd51c91b8af00';
@@ -15105,7 +15104,7 @@
 
 
 /***/ },
-/* 311 */
+/* 310 */
 /***/ function(module, exports) {
 
 	module.exports = [
@@ -15364,7 +15363,7 @@
 	];
 
 /***/ },
-/* 312 */
+/* 311 */
 /***/ function(module, exports) {
 
 	module.exports = [
@@ -15477,7 +15476,7 @@
 	];
 
 /***/ },
-/* 313 */
+/* 312 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -15502,8 +15501,8 @@
 	 * @date 2015
 	 */
 
-	var Iban = __webpack_require__(285);
-	var exchangeAbi = __webpack_require__(314);
+	var Iban = __webpack_require__(284);
+	var exchangeAbi = __webpack_require__(313);
 
 	/**
 	 * Should be used to make Iban transfer
@@ -15575,7 +15574,7 @@
 
 
 /***/ },
-/* 314 */
+/* 313 */
 /***/ function(module, exports) {
 
 	module.exports = [
@@ -15726,7 +15725,7 @@
 	];
 
 /***/ },
-/* 315 */
+/* 314 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -15751,7 +15750,7 @@
 	 * @date 2015
 	 */
 
-	var Method = __webpack_require__(288);
+	var Method = __webpack_require__(287);
 
 	var DB = function (web3) {
 	    this._requestManager = web3._requestManager;
@@ -15798,7 +15797,7 @@
 
 
 /***/ },
-/* 316 */
+/* 315 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -15823,10 +15822,10 @@
 	 * @date 2015
 	 */
 
-	var Method = __webpack_require__(288);
-	var formatters = __webpack_require__(287);
-	var Filter = __webpack_require__(305);
-	var watches = __webpack_require__(306);
+	var Method = __webpack_require__(287);
+	var formatters = __webpack_require__(286);
+	var Filter = __webpack_require__(304);
+	var watches = __webpack_require__(305);
 
 	var Shh = function (web3) {
 	    this._requestManager = web3._requestManager;
@@ -15890,7 +15889,7 @@
 
 
 /***/ },
-/* 317 */
+/* 316 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -15915,8 +15914,8 @@
 	 * @date 2015
 	 */
 
-	var utils = __webpack_require__(244);
-	var Property = __webpack_require__(289);
+	var utils = __webpack_require__(243);
+	var Property = __webpack_require__(288);
 
 	var Net = function (web3) {
 	    this._requestManager = web3._requestManager;
@@ -15948,7 +15947,7 @@
 
 
 /***/ },
-/* 318 */
+/* 317 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -15976,9 +15975,9 @@
 
 	"use strict";
 
-	var Method = __webpack_require__(288);
-	var Property = __webpack_require__(289);
-	var formatters = __webpack_require__(287);
+	var Method = __webpack_require__(287);
+	var Property = __webpack_require__(288);
+	var formatters = __webpack_require__(286);
 
 	function Personal(web3) {
 	    this._requestManager = web3._requestManager;
@@ -16047,7 +16046,7 @@
 
 
 /***/ },
-/* 319 */
+/* 318 */
 /***/ function(module, exports) {
 
 	
@@ -16062,7 +16061,7 @@
 
 
 /***/ },
-/* 320 */
+/* 319 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -16070,13 +16069,13 @@
 	};
 
 /***/ },
-/* 321 */
+/* 320 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var formatters = __webpack_require__(287);
-	var utils = __webpack_require__(244);
-	var Method = __webpack_require__(288);
-	var Property = __webpack_require__(289);
+	var formatters = __webpack_require__(286);
+	var utils = __webpack_require__(243);
+	var Method = __webpack_require__(287);
+	var Property = __webpack_require__(288);
 
 	// TODO: refactor, so the input params are not altered.
 	// it's necessary to make same 'extension' work with multiple providers
@@ -16124,7 +16123,7 @@
 
 
 /***/ },
-/* 322 */
+/* 321 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -16149,8 +16148,8 @@
 	 * @date 2015
 	 */
 
-	var Jsonrpc = __webpack_require__(243);
-	var errors = __webpack_require__(284);
+	var Jsonrpc = __webpack_require__(242);
+	var errors = __webpack_require__(283);
 
 	var Batch = function (web3) {
 	    this.requestManager = web3._requestManager;
@@ -16196,7 +16195,7 @@
 
 
 /***/ },
-/* 323 */
+/* 322 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -16225,7 +16224,7 @@
 
 	"use strict";
 
-	var errors = __webpack_require__(284);
+	var errors = __webpack_require__(283);
 
 	// workaround to use httpprovider in different envs
 	var XMLHttpRequest; // jshint ignore: line
@@ -16240,7 +16239,7 @@
 
 	// node
 	} else {
-	    XMLHttpRequest = __webpack_require__(324).XMLHttpRequest; // jshint ignore: line
+	    XMLHttpRequest = __webpack_require__(323).XMLHttpRequest; // jshint ignore: line
 	}
 
 	/**
@@ -16348,7 +16347,7 @@
 
 
 /***/ },
-/* 324 */
+/* 323 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16363,7 +16362,7 @@
 
 
 /***/ },
-/* 325 */
+/* 324 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -16390,8 +16389,8 @@
 
 	"use strict";
 
-	var utils = __webpack_require__(244);
-	var errors = __webpack_require__(284);
+	var utils = __webpack_require__(243);
+	var errors = __webpack_require__(283);
 
 
 	var IpcProvider = function (path, net) {

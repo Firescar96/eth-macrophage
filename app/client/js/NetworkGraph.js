@@ -1,6 +1,5 @@
 import {MICROBE, MACROPHAGE, CONNECTION, GODSNODE} from './lib/globals.js';
 import {EthereumNetwork} from './EthereumNetwork.js';
-import $ from 'jquery';
 
 let networkGraph;
 
@@ -72,7 +71,7 @@ class NetworkGraph {
     if(!EthereumNetwork.getNodeIDs().includes(message.from)) {
       return;
     }
-    console.log(targetNode.nodeID, message.from);
+
     this.linksG.selectAll('line.link')
     .filter((d) => {
       let hasSource1 = d.source.nodeID.localeCompare(targetNode.nodeID) === 0;

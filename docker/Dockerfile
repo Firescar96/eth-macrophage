@@ -12,7 +12,7 @@ RUN apt-get install -y build-essential libgmp3-dev golang
 RUN apt-get install -y git curl
 
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
-RUN apt-get install nodejs
+RUN apt-get install -y nodejs
 
 WORKDIR $HOME
 RUN curl -O https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz
@@ -27,24 +27,21 @@ RUN git checkout develop
 RUN make geth
 RUN ln -s $HOME/go-ethereum/build/bin/geth /usr/local/bin/geth
 
-RUN curl https://install.meteor.com/ | sh
-
 WORKDIR $HOME
 RUN git clone https://github.com/Firescar96/eth-macrophage
 WORKDIR eth-macrophage/app
 
 RUN git checkout real
-RUN meteor npm install --save react react-mounter react-dom tail-stream
+RUN npm install --no-optional
+RUN npm install -g webpack
+RUN webpack
 
-#meteor port
+#node port
 EXPOSE 4000
 #geth broadcast port
 EXPOSE 23000-23005
 #geth rpc port
 EXPOSE 24000-24005
-#txdata logging port
-EXPOSE 25000-25005
-
 
 ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["meteor", "-p", "4000"]
+CMD ["node", "app.js"]

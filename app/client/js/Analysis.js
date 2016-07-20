@@ -71,8 +71,7 @@ class Analysis {
       return EthereumNetwork.getNodeByID(nodeID);
     })
     .forEach((node) => {
-      Meteor.setServerURL(node.getServerURL());
-      Meteor.call('clearTxData', {nonce: node.id});
+      node.callWS({flag: 'clearTxData', nonce: node.id});
     });
   }
 
@@ -271,7 +270,7 @@ Analysis.logN = function (x, mu, sigma) {
 * @return {[[float], float]} returns the new posterior probabilities and mixing proportions
 */
 Analysis.estep = function (X, K, Mu, P, Sigma) {
-  LL = 0.0; //the LogLikelihood
+  let LL = 0.0; //the LogLikelihood
   let n = X.length;
   let post = [];
   for(let i = 0; i < K; i++) {
