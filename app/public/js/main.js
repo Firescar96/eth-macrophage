@@ -55,7 +55,7 @@
 	var _reactMounter = __webpack_require__(171);
 
 	var MICROBE_ADDR = { ip: '127.0.0.1', port: 4000 };
-	var MACROPHAGE_ADDRS = [{ ip: '127.0.0.1', port: 4000 }];
+	var MACROPHAGE_ADDRS = [{ ip: '40.112.214.192', port: 4000 }, { ip: '40.112.214.192', port: 4000 }];
 
 	_EthereumNetwork.EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
 	  _EthereumNetwork.EthereumNetwork.toggleMicrobe(bootnode);
@@ -118,6 +118,13 @@
 	    }
 	  });
 	  return uniqueArray;
+	};
+
+	String.prototype.rpad = function (padString, length) {
+	  var str = this;
+	  while (str.length < length) {
+	    str = str + padString;
+	  }return str;
 	};
 
 /***/ },
@@ -415,7 +422,7 @@
 	    this._serverIP = serverIP;
 	    this._serverPort = serverPort;
 	    this._txFilterCallbacks = [];
-	    this._wsCallbacks = [];
+	    this._wsCallbacks = {};
 	    this._ws = new WebSocket('ws:' + this._serverIP + ':' + this._serverPort);
 	    this._ws.onopen = function () {}; //WebSocket might break without this line
 	    this._ws.onmessage = function (data) {
@@ -429,7 +436,7 @@
 	        default:
 	          if (_this._wsCallbacks[data.uniqueIdent]) {
 	            _this._wsCallbacks[data.uniqueIdent](_this, data);
-	            _this._wsCallbacks.splice(data.uniqueIdent, 1);
+	            delete _this._wsCallbacks[data.uniqueIdent];
 	          }
 	      }
 	    };
@@ -460,9 +467,9 @@
 	    value: function callWS(data, callback) {
 	      var _this2 = this;
 
-	      data.uniqueIdent = this._wsCallbacks.length;
+	      data.uniqueIdent = Math.floor(Math.random() * 10000);
 	      if (callback) {
-	        this._wsCallbacks.push(callback);
+	        this._wsCallbacks[data.uniqueIdent] = callback;
 	      }
 	      var waitForInit = setInterval(function () {
 	        if (_this2._ws && _this2._ws.readyState) {
@@ -614,20 +621,7 @@
 	      var addPeerPromises = [];
 
 	      _EthereumNetwork.EthereumNetwork.getNodeIDs().forEach(function (nodeID) {
-	        var node = _EthereumNetwork.EthereumNetwork.getNodeByID(nodeID);
-	        var defer = new Promise(function (fufill, reject) {
-	          node.getNodeInfo().then(function (_ref7) {
-	            var _ref8 = _slicedToArray(_ref7, 2);
-
-	            var err = _ref8[0];
-	            var nodeInfo = _ref8[1];
-
-
-	            _this8.addPeer(nodeInfo.id).then(function () {
-	              return fufill();
-	            });
-	          });
-	        });
+	        var defer = _this8.addPeer(nodeInfo.id);
 	        addPeerPromises.push(defer);
 	      });
 
@@ -643,20 +637,13 @@
 
 	  }, {
 	    key: 'removePeer',
-	    value: function removePeer(node) {
+	    value: function removePeer(nodeID) {
 	      var _this9 = this;
 
-	      node = node || _EthereumNetwork.EthereumNetwork.getDefaultBootnode();
+	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
 	      var defer = new Promise(function (fufill, reject) {
-	        node.getNodeInfo().then(function (_ref9) {
-	          var _ref10 = _slicedToArray(_ref9, 2);
-
-	          var err = _ref10[0];
-	          var nodeInfo = _ref10[1];
-
-	          _this9.web3.admin.removePeer(nodeInfo.enode, function () {
-	            fufill();
-	          });
+	        _this9.web3.admin.removePeer(nodeID, function (err, result) {
+	          fufill();
 	        });
 	      });
 	      return defer;
@@ -20791,8 +20778,8 @@
 	        return d.target.y;
 	      }).on('click', function (d) {
 	        if (_this4._selectorType.localeCompare(_globals.CONNECTION) === 0) {
-	          d.source.removePeer(d.target).then(function () {
-	            return d.target.removePeer(d.source);
+	          d.source.removePeer(d.target.nodeID).then(function () {
+	            return d.target.removePeer(d.source.nodeID);
 	          }).then(function () {
 	            _this4.graphData.links.forEach(function (curLink, i) {
 	              if (curLink === d) {
@@ -20896,7 +20883,7 @@
 
 	      if (this._selectorType.localeCompare(_globals.CONNECTION) === 0) {
 	        if (this._selectedConnection) {
-	          this._selectedConnection.data()[0].addPeer(selectedNode);
+	          this._selectedConnection.data()[0].addPeer(selectedNode.nodeID);
 	          networkGraph.linksG.selectAll('line.mouselink').remove();
 	          this._selectedConnection = null;
 	          $('#networkGraph').unbind('mousemove');
@@ -20940,7 +20927,6 @@
 	      }
 	      if (networkGraph._selectorType.localeCompare(_globals.GODSNODE) === 0) {
 	        if (this._selectedGodsnode) {
-	          this._selectedGodsnode.data()[0].addPeer(selectedNode);
 	          this._selectedGodsnode = null;
 	          $('#networkGraph').unbind('mousemove');
 	        } else {
@@ -21223,16 +21209,22 @@
 	      var message = data.data;
 	      this._networkNodeIDs[message.from] = true;
 
+	      if (!this.txHashMessages[targetNode.nodeID][message.txHash]) {
+	        this.txHashMessages[targetNode.nodeID][message.txHash] = [message];
+	      } else {
+	        var alreadyReceived = this.txHashMessages[targetNode.nodeID][message.txHash].some(function (m) {
+	          return m.from.localeCompare(message.from) == 0;
+	        });
+	        if (alreadyReceived) {
+	          return;
+	        }
+	        this.txHashMessages[targetNode.nodeID][message.txHash].push(message);
+	      }
+
 	      if (!this.txHashFrequency[targetNode.nodeID][message.txHash]) {
 	        this.txHashFrequency[targetNode.nodeID][message.txHash] = 1;
 	      } else {
 	        this.txHashFrequency[targetNode.nodeID][message.txHash] += 1;
-	      }
-
-	      if (!this.txHashMessages[targetNode.nodeID][message.txHash]) {
-	        this.txHashMessages[targetNode.nodeID][message.txHash] = [message];
-	      } else {
-	        this.txHashMessages[targetNode.nodeID][message.txHash].push(message);
 	      }
 	    }
 
@@ -21303,17 +21295,13 @@
 	        return node.nodeID;
 	      });
 	      var evaluateNodeIDs = macrophageNodeIDs.length > 0 ? macrophageNodeIDs : Object.keys(this.txHashMessages);
-
+	      console.log(evaluateNodeIDs);
 	      var posteriorProbabilities = evaluateNodeIDs.map(function (targetNodeID) {
-	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID])
-	        //filter out messages that were sent to a macrophage
-	        .map(function (hash) {
-	          return _this3.txHashMessages[targetNodeID][hash].filter(function (message) {
-	            if (!_this3._microbeTxHashes.includes(message.txHash)) {
-	              return false;
-	            }
-
-	            return macrophageNodeIDs.every(function (macNodeID) {
+	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID]).map(function (hash) {
+	          return _this3.txHashMessages[targetNodeID][hash]
+	          //filter out messages that were sent by an evaluating node
+	          .filter(function (message) {
+	            return evaluateNodeIDs.every(function (macNodeID) {
 	              return macNodeID.localeCompare(message.from) !== 0;
 	            });
 	          }).sort(function (a, b) {
@@ -21322,7 +21310,7 @@
 	        })
 	        //the algorithm will break without filtering out empty message groups
 	        .filter(function (messsageGroup) {
-	          return messsageGroup.length;
+	          return messsageGroup.length > 0;
 	        });
 
 	        return {
@@ -21344,7 +21332,9 @@
 	            var time = null;
 	            messageGroup.forEach(function (message) {
 	              if (message.from.localeCompare(nodeID) === 0) {
-	                time = Date.parse(message.time);
+	                var milliSeconds = Date.parse(message.time).toString();
+	                var nanoSeconds = milliSeconds.substr(7, milliSeconds.length - 10) + message.time.match(/\d*/g)[12].rpad('0', 9);
+	                time = parseInt(nanoSeconds);
 	              }
 	            });
 	            return time;
@@ -21382,7 +21372,7 @@
 	        //the initial mean of the cluster, currently defined as along one axis
 	        var mus = new Array(d).fill(1).map(function (mu, i) {
 	          mu = new Array(d).fill(500);
-	          mu[i] = 0;
+	          mu[i] = 1;
 	          return mu;
 	        });
 
@@ -21393,7 +21383,7 @@
 	        var LL = 0.0;
 	        var oldLL = 1.0;
 
-	        while (Math.abs(LL - oldLL) > Math.pow(10, -4) * Math.abs(LL)) {
+	        while (Math.abs(LL - oldLL) > Math.pow(10, -1) * Math.abs(LL)) {
 	          oldLL = LL;
 	          //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
 
@@ -21429,6 +21419,10 @@
 	        pjt.forEach(function (jt, j) {
 	          jt.forEach(function (prob, i) {
 	            if (prob < PROB_THRESHOLD) {
+	              return;
+	            }
+
+	            if (!_this3._microbeTxHashes.includes(data.messageGroups[i][0].txHash)) {
 	              return;
 	            }
 

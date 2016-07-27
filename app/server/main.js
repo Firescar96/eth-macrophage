@@ -121,8 +121,8 @@ exports = module.exports = function (server) {
       data = JSON.parse(data);
       switch (data.flag) {
         case 'createGethInstance':
-          nonce = data.nonce;
-          isMiner = data.isMiner;
+          var nonce = data.nonce;
+          var isMiner = data.isMiner;
           if(nonce >= MAX_GETH_INSTANCES) {
             let returnObj = {
               flag:        'createGethInstance',
@@ -134,14 +134,6 @@ exports = module.exports = function (server) {
 
           if(!usedNonces[nonce]) {
             createGethInstance(isMiner, nonce);
-            let returnObj = {
-              flag:        'createGethInstance',
-              uniqueIdent: data.uniqueIdent,
-              err:         null,
-              rpcport:     GETH_BASE_RPCPORT + nonce,
-            };
-            ws.send(JSON.stringify(returnObj));
-            break;
           }
           let returnObj = {
             flag:        'createGethInstance',
@@ -152,7 +144,7 @@ exports = module.exports = function (server) {
           ws.send(JSON.stringify(returnObj));
           break;
         case 'clearTxData':
-          nonce = data.nonce;
+          var nonce = data.nonce;
           //   //TODO: save txData so the client can get it when they reconnect
           //   //txData[nonce].remove({});
           break;

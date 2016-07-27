@@ -5,8 +5,8 @@ import {mount} from 'react-mounter';
 
 const MICROBE_ADDR = {ip: '127.0.0.1', port: 4000};
 const MACROPHAGE_ADDRS = [
-  {ip: '127.0.0.1', port: 4000},
-  // {ip: '40.77.56.231', port: 4000},
+  {ip: '40.112.214.192', port: 4000},
+  {ip: '40.112.214.192', port: 4000},
 ];
 
 EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((bootnode) => {

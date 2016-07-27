@@ -33,3 +33,10 @@ Array.prototype.unique = function () {
   });
   return uniqueArray;
 };
+
+String.prototype.rpad = function(padString, length) {
+	 var str = this;
+    while (str.length < length)
+        str = str + padString;
+    return str;
+}

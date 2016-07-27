@@ -8,7 +8,7 @@ class EthereumNode {
     this._serverIP = serverIP;
     this._serverPort = serverPort;
     this._txFilterCallbacks = [];
-    this._wsCallbacks = [];
+    this._wsCallbacks = {};
     this._ws = new WebSocket('ws:' + this._serverIP + ':' + this._serverPort);
     this._ws.onopen = () => {}; //WebSocket might break without this line
     this._ws.onmessage = (data) => {
@@ -22,7 +22,7 @@ class EthereumNode {
         default:
           if(this._wsCallbacks[data.uniqueIdent]) {
             this._wsCallbacks[data.uniqueIdent](this, data);
-            this._wsCallbacks.splice(data.uniqueIdent, 1);
+            delete this._wsCallbacks[data.uniqueIdent];
           }
       }
     };
@@ -46,9 +46,9 @@ class EthereumNode {
   }
 
   callWS (data, callback) {
-    data.uniqueIdent = this._wsCallbacks.length;
+    data.uniqueIdent = Math.floor(Math.random()*10000);
     if(callback) {
-      this._wsCallbacks.push(callback);
+      this._wsCallbacks[data.uniqueIdent] = callback;
     }
     let waitForInit = setInterval(
       () => {
@@ -171,13 +171,7 @@ class EthereumNode {
     let addPeerPromises = [];
 
     EthereumNetwork.getNodeIDs().forEach((nodeID) => {
-      let node = EthereumNetwork.getNodeByID(nodeID);
-      let defer  = new Promise( (fufill, reject) => {
-        node.getNodeInfo().then(([err, nodeInfo]) => {
-
-          this.addPeer(nodeInfo.id).then(() => fufill());
-        });
-      });
+      let defer  = this.addPeer(nodeInfo.id);
       addPeerPromises.push(defer);
     });
 
@@ -190,13 +184,11 @@ class EthereumNode {
   }
 
   /*Removes a peer node. If no node is given adds the bootnode*/
-  removePeer (node) {
-    node = node || EthereumNetwork.getDefaultBootnode();
+  removePeer (nodeID) {
+    nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
     let defer = new Promise( (fufill, reject) => {
-      node.getNodeInfo().then(([err, nodeInfo]) => {
-        this.web3.admin.removePeer(nodeInfo.enode, ()=>{
-          fufill();
-        });
+      this.web3.admin.removePeer(nodeID, (err, result)=>{
+        fufill();
       });
     });
     return defer;

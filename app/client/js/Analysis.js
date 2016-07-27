@@ -40,16 +40,21 @@ class Analysis {
     let message = data.data;
     this._networkNodeIDs[message.from] = true;
 
+    if(!this.txHashMessages[targetNode.nodeID][message.txHash]) {
+      this.txHashMessages[targetNode.nodeID][message.txHash] = [message];
+    }else {
+      let alreadyReceived = this.txHashMessages[targetNode.nodeID][message.txHash]
+      .some((m) => m.from.localeCompare(message.from) == 0);
+      if(alreadyReceived) {
+        return;
+      }
+      this.txHashMessages[targetNode.nodeID][message.txHash].push(message);
+    }
+
     if(!this.txHashFrequency[targetNode.nodeID][message.txHash]) {
       this.txHashFrequency[targetNode.nodeID][message.txHash] = 1;
     }else {
       this.txHashFrequency[targetNode.nodeID][message.txHash] += 1;
-    }
-
-    if(!this.txHashMessages[targetNode.nodeID][message.txHash]) {
-      this.txHashMessages[targetNode.nodeID][message.txHash] = [message];
-    }else {
-      this.txHashMessages[targetNode.nodeID][message.txHash].push(message);
     }
   }
 
@@ -109,25 +114,21 @@ class Analysis {
     let macrophageNodeIDs = EthereumNetwork.getMacrophages().map((node) => node.nodeID);
     let evaluateNodeIDs = macrophageNodeIDs.length > 0 ?
     macrophageNodeIDs : Object.keys(this.txHashMessages);
-
+    console.log(evaluateNodeIDs);
     let posteriorProbabilities = evaluateNodeIDs.map((targetNodeID) => {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
-      //filter out messages that were sent to a macrophage
       .map((hash) => {
         return this.txHashMessages[targetNodeID][hash]
+          //filter out messages that were sent by an evaluating node
         .filter((message) => {
-          if(!this._microbeTxHashes.includes(message.txHash)) {
-            return false;
-          }
-
-          return macrophageNodeIDs.every((macNodeID) => {
+          return evaluateNodeIDs.every((macNodeID) => {
             return macNodeID.localeCompare(message.from) !== 0;
           });
         })
         .sort((a, b) => a.from.localeCompare(b.from));
       })
       //the algorithm will break without filtering out empty message groups
-      .filter((messsageGroup) => messsageGroup.length);
+      .filter((messsageGroup) => messsageGroup.length > 0);
 
       return {
         nodeID:        targetNodeID,
@@ -148,7 +149,11 @@ class Analysis {
           let time = null;
           messageGroup.forEach((message) => {
             if(message.from.localeCompare(nodeID) === 0) {
-              time = Date.parse(message.time);
+              let milliSeconds = Date.parse(message.time).toString();
+              let nanoSeconds = milliSeconds
+              .substr(7, milliSeconds.length - 10) +
+              message.time.match(/\d*/g)[12].rpad('0', 9);
+              time =  parseInt(nanoSeconds);
             }
           });
           return time;
@@ -186,7 +191,7 @@ class Analysis {
       //the initial mean of the cluster, currently defined as along one axis
       let mus = new Array(d).fill(1).map((mu, i) => {
         mu = new Array(d).fill(500);
-        mu[i] = 0;
+        mu[i] = 1;
         return mu;
       });
 
@@ -197,7 +202,7 @@ class Analysis {
       let LL = 0.0;
       let oldLL = 1.0;
 
-      while(Math.abs(LL - oldLL) > (Math.pow(10, -4) * Math.abs(LL))) {
+      while(Math.abs(LL - oldLL) > (Math.pow(10, -1) * Math.abs(LL))) {
         oldLL = LL;
         //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
         [pjt, LL] = Analysis.estep(X, K, mus, partial, sigmas);
@@ -220,6 +225,10 @@ class Analysis {
       pjt.forEach((jt, j) => {
         jt.forEach((prob, i) => {
           if(prob < PROB_THRESHOLD) {
+            return;
+          }
+
+          if(!this._microbeTxHashes.includes(data.messageGroups[i][0].txHash)) {
             return;
           }
 

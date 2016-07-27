@@ -14,7 +14,7 @@ http://imgur.com/a/EJklR
 ### Running it locally
 
 #### Dependencies
-go-ethereum, npm
+go-ethereum, npm, node>=6.x
 
 Geth normally does not log individual transactions so eth-macrophage requires a forked version. [Firescar96/go-ethereum](https://github.com/Firescar96/go-ethereum)
 

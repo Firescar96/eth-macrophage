@@ -182,9 +182,9 @@ class NetworkGraph {
     .attr('y2', (d) => d.target.y)
     .on('click', (d) => {
       if(this._selectorType.localeCompare(CONNECTION) === 0) {
-        d.source.removePeer(d.target)
+        d.source.removePeer(d.target.nodeID)
         .then(() => {
-          return d.target.removePeer(d.source);
+          return d.target.removePeer(d.source.nodeID);
         })
         .then(() => {
           this.graphData.links.forEach((curLink, i) => {
@@ -279,7 +279,7 @@ class NetworkGraph {
   setSelectedNode (selectedNode) {
     if(this._selectorType.localeCompare(CONNECTION) === 0) {
       if(this._selectedConnection) {
-        this._selectedConnection.data()[0].addPeer(selectedNode);
+        this._selectedConnection.data()[0].addPeer(selectedNode.nodeID);
         networkGraph.linksG.selectAll('line.mouselink').remove();
         this._selectedConnection = null;
         $('#networkGraph').unbind('mousemove');
@@ -320,7 +320,6 @@ class NetworkGraph {
     }
     if(networkGraph._selectorType.localeCompare(GODSNODE) === 0) {
       if(this._selectedGodsnode) {
-        this._selectedGodsnode.data()[0].addPeer(selectedNode);
         this._selectedGodsnode = null;
         $('#networkGraph').unbind('mousemove');
       }else {
