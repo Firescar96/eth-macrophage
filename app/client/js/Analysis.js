@@ -1,12 +1,12 @@
 import {EthereumNetwork} from './EthereumNetwork.js';
-import {networkGraph} from './NetworkGraph.js';
 require('./lib/lib.js');
 
 //this will be used as the minimum time for a message to be sent over the network
 //in graphs and calculations, data will be scaled to this instead of 0
 const MINIMUM_NETWORK_TIME = 1;
-const NETWORK_TIME_SCALE = 11;
-const PROB_THRESHOLD = .0001;
+const PROB_THRESHOLD = 0.00001;
+const INIT_EM_MEAN = 1.01;
+const INIT_EM_VARIANCE = 0.00000001;
 
 /**
 *This class constains all the function available to do an Eth-Macrophage
@@ -89,20 +89,6 @@ class Analysis {
   }
 
   /**
-  * Call this to ensure the same order of messages is used everytime
-  * @param  {string} nodeID
-  * @param  {string} message
-  * @return {[json]}         a sorted array of json objects, one for each message
-  */
-  /*
-  getSortedTxHashMessages (nodeID, hash) {
-  let items = this.txHashMessages[nodeID][hash];
-  items.sort((a, b) => a.from.localeCompare(b.from));
-
-  return items;
-  }*/
-
-  /**
   * run the Expectation Maximization Algorithm
   * @return {json} nested array of message assignments, one for each node in the
   * EthereumNetwork
@@ -112,14 +98,15 @@ class Analysis {
     //sorted data.
     let sortedAllNodeIDs = Object.keys(this._networkNodeIDs).sort();
     let macrophageNodeIDs = EthereumNetwork.getMacrophages().map((node) => node.nodeID);
-    let evaluateNodeIDs = macrophageNodeIDs.length > 0 ?
-    macrophageNodeIDs : Object.keys(this.txHashMessages);
-    console.log(evaluateNodeIDs);
-    let posteriorProbabilities = evaluateNodeIDs.map((targetNodeID) => {
+    let allNodeIDs = EthereumNetwork.getNodeIDs();
+    let evaluateNodeIDs = macrophageNodeIDs.length > 0 ? macrophageNodeIDs : allNodeIDs;
+    window.sortedAllNodeIDs = sortedAllNodeIDs;
+    let probabilityAssignments =
+    evaluateNodeIDs.map((targetNodeID) => {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
       .map((hash) => {
         return this.txHashMessages[targetNodeID][hash]
-          //filter out messages that were sent by an evaluating node
+        //filter out messages that were sent by an evaluating node
         .filter((message) => {
           return evaluateNodeIDs.every((macNodeID) => {
             return macNodeID.localeCompare(message.from) !== 0;
@@ -139,10 +126,7 @@ class Analysis {
     .filter((data) => {
       return data.messageGroups.length > 0;
     })
-    //after cleaning the data into a computable format, let's do some computation
     .map((data) => {
-      //console.log('running EM for', data.nodeID);
-
       //input data converted from the messages into numbers
       let X = data.messageGroups.map((messageGroup) => {
         return sortedAllNodeIDs.map((nodeID) => {
@@ -162,63 +146,13 @@ class Analysis {
 
       //TODO: evaluate whether it's okay to normalize all the points
       //independently in this way, try other normalization functions
-      ////normalize points down to the MINIMUM_NETWORK_TIME
+      ////norm alize points down to the MINIMUM_NETWORK_TIME
       X = X.map((point) => {
-        let baselineX = Math.min(...point.filter((p) => p)) - MINIMUM_NETWORK_TIME;
-        return point.map((t) => {
-          return t ?
-          (Math.exp(Math.log(t) - Math.log(baselineX)) % 1 * Math.pow(10, NETWORK_TIME_SCALE)) :
-          null;
-        });
+        let baselineX = Math.max(Math.min(...point.filter((p) => p)), MINIMUM_NETWORK_TIME);
+        return point.map((t) => t ? (t / baselineX) : null);
       });
 
-      //simulated input data
-      //let X = [[1, 0.5, 0], [0.5, 1, 0], [1, 2, .2], [0.5, 1, 0], [0.2, 1, 0], [1, 0.2, 0]];
-
-      //helper defnitions
-      let n = X.length;
-      let d = sortedAllNodeIDs.length;
-
-      //*these are tunable parameters*
-      //initial mixing probability
-      let partial = new Array(d).fill(1 / d);
-      //posterior probability, the numbers here don't matter
-      let pjt = new Array(d).fill(new Array(n).fill(0));
-      //number of clusters
-      let K = d;
-
-      //cluster defnition parameters, *these can be tuned as desired*
-      //the initial mean of the cluster, currently defined as along one axis
-      let mus = new Array(d).fill(1).map((mu, i) => {
-        mu = new Array(d).fill(500);
-        mu[i] = 1;
-        return mu;
-      });
-
-      //the cluster variance
-      let sigmas = new Array(d).fill(0.5);
-
-      //the LogLikelihood
-      let LL = 0.0;
-      let oldLL = 1.0;
-
-      while(Math.abs(LL - oldLL) > (Math.pow(10, -1) * Math.abs(LL))) {
-        oldLL = LL;
-        //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
-        [pjt, LL] = Analysis.estep(X, K, mus, partial, sigmas);
-        [mus, partial, sigmas] = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
-      }
-      //console.log('pjt', pjt);
-      //console.log('musig', partial, mus, sigmas);
-
-      //find the softmax of the assignments
-      //removed in favor of sending all the data
-      /*let assignmentClusters = new Array(n).fill(0);
-      pjt.forEach((jt, j) => {
-      jt.forEach((prob, i) => {
-      assignmentClusters[i] = prob > pjt[assignmentClusters[i]][i] ? j : assignmentClusters[i];
-      });
-      });*/
+      let pjt = Analysis.runEM(X);
 
       //flatten the assignments if they are greater than the threshold
       let assignments = [];
@@ -244,11 +178,52 @@ class Analysis {
       return assignments;
     });
 
-
-
-    return posteriorProbabilities;
+    return probabilityAssignments;
   }
+
 }
+
+Analysis.runEM = function (X) {
+  window.X = X;
+  //simulated input data
+  //let X = [[1, 0.5, 0], [0.5, 1, 0], [1, 2, .2], [0.5, 1, 0], [0.2, 1, 0], [1, 0.2, 0]];
+
+  //helper defnitions
+  let n = X.length;
+  let d = X[0].length;
+
+  //*these are tunable parameters*
+  //initial mixing probability
+  let partial = new Array(d).fill(1 / d);
+  //posterior probability, the numbers here don't matter
+  let pjt = new Array(d).fill(new Array(n).fill(0));
+  //number of clusters
+  let K = d;
+
+  //cluster defnition parameters, *these can be tuned as desired*
+  //the initial mean of the cluster, currently defined as along one axis
+  let mus = new Array(d).fill(1).map((m, i) => {
+    let mu = new Array(d).fill(INIT_EM_MEAN);
+    mu[i] = 1;
+    return mu;
+  });
+
+  //the cluster variance
+  let sigmas = new Array(d).fill(INIT_EM_VARIANCE);
+
+  //the LogLikelihood
+  let LL = 0.0;
+  let oldLL = 1.0;
+
+  while(Math.abs(LL - oldLL) > (Math.pow(10, -4) * Math.abs(LL))) {
+    oldLL = LL;
+    //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
+    [pjt, LL] = Analysis.estep(X, K, mus, partial, sigmas);
+    [mus, partial, sigmas] = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
+  }
+
+  return pjt;
+};
 
 /**
 * Expectation Maximization likelihood calculator,
@@ -262,7 +237,7 @@ class Analysis {
 Analysis.logN = function (x, mu, sigma) {
   let d = x.length;
   let squaredDiff = x.reduce((x0, x1, i1) => {
-    return x0 + Math.pow((x1 - mu[i1]), 2);
+    return x1 ? x0 + Math.pow((x1 - mu[i1]), 2) : x0;
   }, 0);
   let eExponent = -squaredDiff / (2 * sigma);
   let result = eExponent * Math.log(Math.E) - (d / 2 * Math.log(Math.PI * 2 * sigma));
@@ -326,7 +301,7 @@ Analysis.estep = function (X, K, Mu, P, Sigma) {
 */
 Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
   let n = X.length;
-  let d = K;
+  let d = X[0].length;
 
   P.forEach((p, j) => {
 
@@ -334,38 +309,36 @@ Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
 
     P[j] = nj / n;
 
-    let newmu = new Array(n).fill(1).map((mu, i) => {
-      return new Array(d).fill(0);
-    });
-    let newmutotal = [];
+    let newmu = new Array(d).fill(0);
+    let newmutotal = new Array(d).fill(0);
+
     X.forEach((x, t) => {
       let delta = x.map((x0) => x0 ? 1 : 0);
       x.forEach((x0, i) => {
-        newmu[t][i] += delta[i] * x0 * post[j][t];
+        //todo mus are keyed by cluster not data point
+        newmu[i] += delta[i] * x0 * post[j][t];
+        newmutotal[i] += delta[i] * post[j][t];
       });
-      newmutotal = newmutotal.map((mu, i) => delta[i] * post[j][t]);
     });
-
-    newmutotal.forEach((total, t) => {
-      Mu[j][t] = newmu[t].map((mu, i) => mu / total);
+    newmutotal.forEach((total, i) => {
+      Mu[j][i] = total > 0 ? newmu[i] / total : Mu[j][i];
     });
 
     let newsigma = 0;
     let newsigmatotal = 0;
     X.forEach((x, t) => {
       let delta = x.map((x0) => x0 ? 1 : 0);
-      x = x.map((x0, e) => {
-        return x0 ? x0 * delta[e] : delta[e];
-      });
+
       let mu = Mu[j].map((x0, e) => x0 * delta[e]);
       let squaredDiff = x.reduce((x0, x1, i1) => {
-        return x0 + Math.pow((x1 - mu[i1]), 2);
+        return x1 ? x0 + Math.pow((x1 - mu[i1]), 2) : x0;
       }, 0);
 
       newsigma += post[j][t] * squaredDiff;
       let deltasize = delta.filter((e) => e !== 0).length;
       newsigmatotal += deltasize * post[j][t];
     });
+
     Sigma[j] = Math.max(newsigma / newsigmatotal || minVariance, minVariance);
   });
   return [Mu, P, Sigma];

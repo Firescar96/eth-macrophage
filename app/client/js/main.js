@@ -19,9 +19,10 @@ EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((boot
       EthereumNetwork.createNode(false, macrophageAddr.ip, macrophageAddr.port)
       .then( (newNode) => {
         EthereumNetwork.toggleMacrophage(newNode);
-        newNode.addPeer().then(() => {
+        resolve();
+        /*newNode.addPeer().then(() => {
           resolve();
-        });
+        });*/
       });
     });
     createNodePromises.push(defer);

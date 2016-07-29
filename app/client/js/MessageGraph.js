@@ -131,7 +131,7 @@ class MessageGraph {
     this.svg.select('.x-axis').remove();
     this.svg.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 3/4 + ')')
+    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 3 / 4 + ')')
     .transition()
     .call(xAxis)
     .selectAll('text')
@@ -145,10 +145,6 @@ class MessageGraph {
     .call(yAxis)
     .selectAll('text')
     .attr('transform', 'rotate(-45)');
-
-    // this.svg
-    // .attr('height', this.messagesG.height)
-    // .attr('width', this.messagesG.width);
   }
 
   /**

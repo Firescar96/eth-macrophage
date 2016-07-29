@@ -37,6 +37,7 @@ exports = module.exports = function (server) {
     rpcapi:        'admin,web3,eth,net',
     rpccorsdomain: '"http://127.0.0.1:4000,http://localhost:4000,http://40.77.56.231:4000"',
     testnet:       true,
+    fast:          true,
   };
 
   /**
@@ -75,6 +76,7 @@ exports = module.exports = function (server) {
     //TODO: turn this callback into a promise
     exec('mkdir ' + gethInstanceConfig.datadir);
     exec('touch ' + gethInstanceConfig.logfile, () => {
+      console.log(gethInstanceConfig.logfile);
       let logStream = tailStream.createReadStream(gethInstanceConfig.logfile, {});
       logStream.on('data', (data) => {
         let messages = /\{.*\}/.exec(data);
@@ -83,7 +85,7 @@ exports = module.exports = function (server) {
           if(message.txHash) {
             let returnObj = {flag: 'txData', nonce: curNonce, data: message};
             wss.clients.forEach((client) => {
-              client.send(JSON.stringify(returnObj));
+              client.send(JSON.stringify(returnObj), () => {});
             });
           }
         }
@@ -100,7 +102,7 @@ exports = module.exports = function (server) {
       '--rpcport=' + gethInstanceConfig.rpcport, '--rpcaddr=' + gethInstanceConfig.rpcaddr,
       '--rpcapi=' + gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
       '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
-      '--password=' + gethInstanceConfig.password, '--testnet',
+      '--password=' + gethInstanceConfig.password, '--testnet', '--fast',
       '--maxpeers=' + gethInstanceConfig.maxpeers, 'js ' + gethInstanceConfig.js]);
 
       //For some reason geth flips the out and err output..or something

@@ -15,15 +15,18 @@ class EthereumNode {
       data = JSON.parse(data.data);
       switch (data.flag) {
         case 'txData':
-          this._txFilterCallbacks.forEach((callback) => {
-            callback(this, data);
-          });
-          break;
+        if(data.nonce != this.id) {
+          return;
+        }
+        this._txFilterCallbacks.forEach((callback) => {
+          callback(this, data);
+        });
+        break;
         default:
-          if(this._wsCallbacks[data.uniqueIdent]) {
-            this._wsCallbacks[data.uniqueIdent](this, data);
-            delete this._wsCallbacks[data.uniqueIdent];
-          }
+        if(this._wsCallbacks[data.uniqueIdent]) {
+          this._wsCallbacks[data.uniqueIdent](this, data);
+          delete this._wsCallbacks[data.uniqueIdent];
+        }
       }
     };
     this.web3 = null;
@@ -160,7 +163,7 @@ class EthereumNode {
     nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
     let defer = new Promise( (fufill, reject) => {
       this.web3.admin.addPeer(nodeID, (err, result)=>{
-        fufill();
+        fufill([err, result]);
       });
     });
     return defer;
@@ -188,7 +191,7 @@ class EthereumNode {
     nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
     let defer = new Promise( (fufill, reject) => {
       this.web3.admin.removePeer(nodeID, (err, result)=>{
-        fufill();
+        fufill([err, result]);
       });
     });
     return defer;

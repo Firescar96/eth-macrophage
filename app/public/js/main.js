@@ -66,9 +66,10 @@
 	    var defer = new Promise(function (resolve, reject) {
 	      _EthereumNetwork.EthereumNetwork.createNode(false, macrophageAddr.ip, macrophageAddr.port).then(function (newNode) {
 	        _EthereumNetwork.EthereumNetwork.toggleMacrophage(newNode);
-	        newNode.addPeer().then(function () {
+	        resolve();
+	        /*newNode.addPeer().then(() => {
 	          resolve();
-	        });
+	        });*/
 	      });
 	    });
 	    createNodePromises.push(defer);
@@ -429,6 +430,9 @@
 	      data = JSON.parse(data.data);
 	      switch (data.flag) {
 	        case 'txData':
+	          if (data.nonce != _this.id) {
+	            return;
+	          }
 	          _this._txFilterCallbacks.forEach(function (callback) {
 	            callback(_this, data);
 	          });
@@ -605,7 +609,7 @@
 	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
 	      var defer = new Promise(function (fufill, reject) {
 	        _this7.web3.admin.addPeer(nodeID, function (err, result) {
-	          fufill();
+	          fufill([err, result]);
 	        });
 	      });
 	      return defer;
@@ -643,7 +647,7 @@
 	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
 	      var defer = new Promise(function (fufill, reject) {
 	        _this9.web3.admin.removePeer(nodeID, function (err, result) {
-	          fufill();
+	          fufill([err, result]);
 	        });
 	      });
 	      return defer;
@@ -21091,10 +21095,6 @@
 
 	      this.svg.select('.y-axis').remove();
 	      this.svg.append('g').attr('class', 'y-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')').transition().call(yAxis).selectAll('text').attr('transform', 'rotate(-45)');
-
-	      // this.svg
-	      // .attr('height', this.messagesG.height)
-	      // .attr('width', this.messagesG.width);
 	    }
 
 	    /**
@@ -21139,6 +21139,7 @@
 	}();
 
 	var messageGraph = new MessageGraph();
+	window.messageGraph = messageGraph;
 	exports.messageGraph = messageGraph;
 
 /***/ },
@@ -21158,8 +21159,6 @@
 
 	var _EthereumNetwork = __webpack_require__(2);
 
-	var _NetworkGraph = __webpack_require__(164);
-
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -21169,8 +21168,9 @@
 	//this will be used as the minimum time for a message to be sent over the network
 	//in graphs and calculations, data will be scaled to this instead of 0
 	var MINIMUM_NETWORK_TIME = 1;
-	var NETWORK_TIME_SCALE = 11;
-	var PROB_THRESHOLD = .0001;
+	var PROB_THRESHOLD = 0.00001;
+	var INIT_EM_MEAN = 1.01;
+	var INIT_EM_VARIANCE = 0.00000001;
 
 	/**
 	*This class constains all the function available to do an Eth-Macrophage
@@ -21265,19 +21265,6 @@
 	    }
 
 	    /**
-	    * Call this to ensure the same order of messages is used everytime
-	    * @param  {string} nodeID
-	    * @param  {string} message
-	    * @return {[json]}         a sorted array of json objects, one for each message
-	    */
-	    /*
-	    getSortedTxHashMessages (nodeID, hash) {
-	    let items = this.txHashMessages[nodeID][hash];
-	    items.sort((a, b) => a.from.localeCompare(b.from));
-	     return items;
-	    }*/
-
-	    /**
 	    * run the Expectation Maximization Algorithm
 	    * @return {json} nested array of message assignments, one for each node in the
 	    * EthereumNetwork
@@ -21294,9 +21281,10 @@
 	      var macrophageNodeIDs = _EthereumNetwork.EthereumNetwork.getMacrophages().map(function (node) {
 	        return node.nodeID;
 	      });
-	      var evaluateNodeIDs = macrophageNodeIDs.length > 0 ? macrophageNodeIDs : Object.keys(this.txHashMessages);
-	      console.log(evaluateNodeIDs);
-	      var posteriorProbabilities = evaluateNodeIDs.map(function (targetNodeID) {
+	      var allNodeIDs = _EthereumNetwork.EthereumNetwork.getNodeIDs();
+	      var evaluateNodeIDs = macrophageNodeIDs.length > 0 ? macrophageNodeIDs : allNodeIDs;
+	      window.sortedAllNodeIDs = sortedAllNodeIDs;
+	      var probabilityAssignments = evaluateNodeIDs.map(function (targetNodeID) {
 	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID]).map(function (hash) {
 	          return _this3.txHashMessages[targetNodeID][hash]
 	          //filter out messages that were sent by an evaluating node
@@ -21321,11 +21309,7 @@
 	      //it's no use computing on non existent data
 	      .filter(function (data) {
 	        return data.messageGroups.length > 0;
-	      })
-	      //after cleaning the data into a computable format, let's do some computation
-	      .map(function (data) {
-	        //console.log('running EM for', data.nodeID);
-
+	      }).map(function (data) {
 	        //input data converted from the messages into numbers
 	        var X = data.messageGroups.map(function (messageGroup) {
 	          return sortedAllNodeIDs.map(function (nodeID) {
@@ -21343,76 +21327,17 @@
 
 	        //TODO: evaluate whether it's okay to normalize all the points
 	        //independently in this way, try other normalization functions
-	        ////normalize points down to the MINIMUM_NETWORK_TIME
+	        ////norm alize points down to the MINIMUM_NETWORK_TIME
 	        X = X.map(function (point) {
-	          var baselineX = Math.min.apply(Math, _toConsumableArray(point.filter(function (p) {
+	          var baselineX = Math.max(Math.min.apply(Math, _toConsumableArray(point.filter(function (p) {
 	            return p;
-	          }))) - MINIMUM_NETWORK_TIME;
+	          }))), MINIMUM_NETWORK_TIME);
 	          return point.map(function (t) {
-	            return t ? Math.exp(Math.log(t) - Math.log(baselineX)) % 1 * Math.pow(10, NETWORK_TIME_SCALE) : null;
+	            return t ? t / baselineX : null;
 	          });
 	        });
 
-	        //simulated input data
-	        //let X = [[1, 0.5, 0], [0.5, 1, 0], [1, 2, .2], [0.5, 1, 0], [0.2, 1, 0], [1, 0.2, 0]];
-
-	        //helper defnitions
-	        var n = X.length;
-	        var d = sortedAllNodeIDs.length;
-
-	        //*these are tunable parameters*
-	        //initial mixing probability
-	        var partial = new Array(d).fill(1 / d);
-	        //posterior probability, the numbers here don't matter
-	        var pjt = new Array(d).fill(new Array(n).fill(0));
-	        //number of clusters
-	        var K = d;
-
-	        //cluster defnition parameters, *these can be tuned as desired*
-	        //the initial mean of the cluster, currently defined as along one axis
-	        var mus = new Array(d).fill(1).map(function (mu, i) {
-	          mu = new Array(d).fill(500);
-	          mu[i] = 1;
-	          return mu;
-	        });
-
-	        //the cluster variance
-	        var sigmas = new Array(d).fill(0.5);
-
-	        //the LogLikelihood
-	        var LL = 0.0;
-	        var oldLL = 1.0;
-
-	        while (Math.abs(LL - oldLL) > Math.pow(10, -1) * Math.abs(LL)) {
-	          oldLL = LL;
-	          //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
-
-	          var _Analysis$estep = Analysis.estep(X, K, mus, partial, sigmas);
-
-	          var _Analysis$estep2 = _slicedToArray(_Analysis$estep, 2);
-
-	          pjt = _Analysis$estep2[0];
-	          LL = _Analysis$estep2[1];
-
-	          var _Analysis$mstep = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
-
-	          var _Analysis$mstep2 = _slicedToArray(_Analysis$mstep, 3);
-
-	          mus = _Analysis$mstep2[0];
-	          partial = _Analysis$mstep2[1];
-	          sigmas = _Analysis$mstep2[2];
-	        }
-	        //console.log('pjt', pjt);
-	        //console.log('musig', partial, mus, sigmas);
-
-	        //find the softmax of the assignments
-	        //removed in favor of sending all the data
-	        /*let assignmentClusters = new Array(n).fill(0);
-	        pjt.forEach((jt, j) => {
-	        jt.forEach((prob, i) => {
-	        assignmentClusters[i] = prob > pjt[assignmentClusters[i]][i] ? j : assignmentClusters[i];
-	        });
-	        });*/
+	        var pjt = Analysis.runEM(X);
 
 	        //flatten the assignments if they are greater than the threshold
 	        var assignments = [];
@@ -21438,12 +21363,67 @@
 	        return assignments;
 	      });
 
-	      return posteriorProbabilities;
+	      return probabilityAssignments;
 	    }
 	  }]);
 
 	  return Analysis;
 	}();
+
+	Analysis.runEM = function (X) {
+	  window.X = X;
+	  //simulated input data
+	  //let X = [[1, 0.5, 0], [0.5, 1, 0], [1, 2, .2], [0.5, 1, 0], [0.2, 1, 0], [1, 0.2, 0]];
+
+	  //helper defnitions
+	  var n = X.length;
+	  var d = X[0].length;
+
+	  //*these are tunable parameters*
+	  //initial mixing probability
+	  var partial = new Array(d).fill(1 / d);
+	  //posterior probability, the numbers here don't matter
+	  var pjt = new Array(d).fill(new Array(n).fill(0));
+	  //number of clusters
+	  var K = d;
+
+	  //cluster defnition parameters, *these can be tuned as desired*
+	  //the initial mean of the cluster, currently defined as along one axis
+	  var mus = new Array(d).fill(1).map(function (m, i) {
+	    var mu = new Array(d).fill(INIT_EM_MEAN);
+	    mu[i] = 1;
+	    return mu;
+	  });
+
+	  //the cluster variance
+	  var sigmas = new Array(d).fill(INIT_EM_VARIANCE);
+
+	  //the LogLikelihood
+	  var LL = 0.0;
+	  var oldLL = 1.0;
+
+	  while (Math.abs(LL - oldLL) > Math.pow(10, -4) * Math.abs(LL)) {
+	    oldLL = LL;
+	    //[pjt] = Analysis.e(X, partial, pjt, mu, sigma);
+
+	    var _Analysis$estep = Analysis.estep(X, K, mus, partial, sigmas);
+
+	    var _Analysis$estep2 = _slicedToArray(_Analysis$estep, 2);
+
+	    pjt = _Analysis$estep2[0];
+	    LL = _Analysis$estep2[1];
+
+	    var _Analysis$mstep = Analysis.mstep(X, K, mus, partial, sigmas, pjt);
+
+	    var _Analysis$mstep2 = _slicedToArray(_Analysis$mstep, 3);
+
+	    mus = _Analysis$mstep2[0];
+	    partial = _Analysis$mstep2[1];
+	    sigmas = _Analysis$mstep2[2];
+	  }
+
+	  return pjt;
+	};
 
 	/**
 	* Expectation Maximization likelihood calculator,
@@ -21454,12 +21434,10 @@
 	* @param  {float} sigma the variance for one cluster
 	* @return {float}       a single value estimate
 	*/
-
-
 	Analysis.logN = function (x, mu, sigma) {
 	  var d = x.length;
 	  var squaredDiff = x.reduce(function (x0, x1, i1) {
-	    return x0 + Math.pow(x1 - mu[i1], 2);
+	    return x1 ? x0 + Math.pow(x1 - mu[i1], 2) : x0;
 	  }, 0);
 	  var eExponent = -squaredDiff / (2 * sigma);
 	  var result = eExponent * Math.log(Math.E) - d / 2 * Math.log(Math.PI * 2 * sigma);
@@ -21537,7 +21515,7 @@
 	  var minVariance = arguments.length <= 6 || arguments[6] === undefined ? 0.00000001 : arguments[6];
 
 	  var n = X.length;
-	  var d = K;
+	  var d = X[0].length;
 
 	  P.forEach(function (p, j) {
 
@@ -21547,26 +21525,21 @@
 
 	    P[j] = nj / n;
 
-	    var newmu = new Array(n).fill(1).map(function (mu, i) {
-	      return new Array(d).fill(0);
-	    });
-	    var newmutotal = [];
+	    var newmu = new Array(d).fill(0);
+	    var newmutotal = new Array(d).fill(0);
+
 	    X.forEach(function (x, t) {
 	      var delta = x.map(function (x0) {
 	        return x0 ? 1 : 0;
 	      });
 	      x.forEach(function (x0, i) {
-	        newmu[t][i] += delta[i] * x0 * post[j][t];
-	      });
-	      newmutotal = newmutotal.map(function (mu, i) {
-	        return delta[i] * post[j][t];
+	        //todo mus are keyed by cluster not data point
+	        newmu[i] += delta[i] * x0 * post[j][t];
+	        newmutotal[i] += delta[i] * post[j][t];
 	      });
 	    });
-
-	    newmutotal.forEach(function (total, t) {
-	      Mu[j][t] = newmu[t].map(function (mu, i) {
-	        return mu / total;
-	      });
+	    newmutotal.forEach(function (total, i) {
+	      Mu[j][i] = total > 0 ? newmu[i] / total : Mu[j][i];
 	    });
 
 	    var newsigma = 0;
@@ -21575,14 +21548,12 @@
 	      var delta = x.map(function (x0) {
 	        return x0 ? 1 : 0;
 	      });
-	      x = x.map(function (x0, e) {
-	        return x0 ? x0 * delta[e] : delta[e];
-	      });
+
 	      var mu = Mu[j].map(function (x0, e) {
 	        return x0 * delta[e];
 	      });
 	      var squaredDiff = x.reduce(function (x0, x1, i1) {
-	        return x0 + Math.pow(x1 - mu[i1], 2);
+	        return x1 ? x0 + Math.pow(x1 - mu[i1], 2) : x0;
 	      }, 0);
 
 	      newsigma += post[j][t] * squaredDiff;
@@ -21591,6 +21562,7 @@
 	      }).length;
 	      newsigmatotal += deltasize * post[j][t];
 	    });
+
 	    Sigma[j] = Math.max(newsigma / newsigmatotal || minVariance, minVariance);
 	  });
 	  return [Mu, P, Sigma];
