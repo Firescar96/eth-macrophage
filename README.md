@@ -16,7 +16,7 @@ http://imgur.com/a/EJklR
 #### Dependencies
 go-ethereum, npm, node>=6.x
 
-Geth normally does not log individual transactions so eth-macrophage requires a forked version. [Firescar96/go-ethereum](https://github.com/Firescar96/go-ethereum)
+Geth normally does not log individual transactions so eth-macrophage requires a forked version. The `develop` branch is required, but look out for the occasional rebase and force push to keep up with upstream. [Firescar96/go-ethereum](https://github.com/Firescar96/go-ethereum)
 
 #### Execution
 Enter the `app/` directory and run `node app`.
@@ -28,7 +28,8 @@ You'll need [webpack](https://www.npmjs.com/package/webpack) to build/compile yo
 Alternatively it may be easier to use my docker container. New docker releases will lag slightly behind my rate of development.
 
 #### Execution
-`docker run --rm -P --net host -ti firescar96/eth-macrophage bash`
+`docker run --rm -P --net host -ti firescar96/eth-macrophage:<tag> bash`
+For <tag> choose either `client` or `server`. The versions are very similar, but optimized for running on a weak computer vs a more powerful server respectively.
 
 For persistent storage of the blockchain I perfer to mount my local ethereum directory. Change the mount point to a different directory if you have anything you care about (like all your ether) in `$HOME/.ethereum`.
 
