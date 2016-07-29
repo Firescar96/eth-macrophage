@@ -27,7 +27,7 @@ exports = module.exports = function (server) {
     js:            ASSETS_BASE_DATADIR + 'periodicmine.js',
     logfile:       'log.log',
     minerthreads:  1,
-    maxpeers:      25,
+    maxpeers:      5000,
     networkid:     2,
     password:      ASSETS_BASE_DATADIR + 'password',
     port:          GETH_BASE_PORT,
