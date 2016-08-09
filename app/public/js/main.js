@@ -55,7 +55,7 @@
 	var _reactMounter = __webpack_require__(171);
 
 	var MICROBE_ADDR = { ip: '127.0.0.1', port: 4000 };
-	var MACROPHAGE_ADDRS = [{ ip: '40.112.214.192', port: 4000 }, { ip: '40.112.214.192', port: 4000 }];
+	var MACROPHAGE_ADDRS = [{ ip: 'macrophage1.westus.cloudapp.azure.com', port: 4000 }, { ip: 'macrophage2.canadacentral.cloudapp.azure.com', port: 4000 }, { ip: 'macrophage3.southcentralus.cloudapp.azure.com', port: 4000 }, { ip: 'macrophage4.brazilsouth.cloudapp.azure.com', port: 4000 }];
 
 	_EthereumNetwork.EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
 	  _EthereumNetwork.EthereumNetwork.toggleMicrobe(bootnode);
@@ -67,9 +67,6 @@
 	      _EthereumNetwork.EthereumNetwork.createNode(false, macrophageAddr.ip, macrophageAddr.port).then(function (newNode) {
 	        _EthereumNetwork.EthereumNetwork.toggleMacrophage(newNode);
 	        resolve();
-	        /*newNode.addPeer().then(() => {
-	          resolve();
-	        });*/
 	      });
 	    });
 	    createNodePromises.push(defer);
@@ -157,7 +154,7 @@
 	EthereumNetwork._nodeFilterCallbacks = [];
 
 	EthereumNetwork._defaultBootnode;
-	EthereumNetwork._currentNonce = 0;
+	EthereumNetwork._currentNonce = {};
 
 	EthereumNetwork._selectedMicrobe = null;
 	EthereumNetwork.macrophageManager = _MacrophageManager.macrophageManager;
@@ -185,7 +182,12 @@
 	* @return {Promise}
 	*/
 	EthereumNetwork.createNode = function (isMiner, serverIP, serverPort) {
-	  var currentNonce = EthereumNetwork._currentNonce++;
+	  var nonceKey = serverIP + serverPort;
+	  if (!EthereumNetwork._currentNonce[nonceKey]) {
+	    EthereumNetwork._currentNonce[nonceKey] = 0;
+	  }
+
+	  var currentNonce = EthereumNetwork._currentNonce[nonceKey]++;
 	  var defer = new Promise(function (resolve, reject) {
 	    var newNode = new _EthereumNode.EthereumNode(currentNonce, serverIP, serverPort);
 
@@ -21139,7 +21141,6 @@
 	}();
 
 	var messageGraph = new MessageGraph();
-	window.messageGraph = messageGraph;
 	exports.messageGraph = messageGraph;
 
 /***/ },

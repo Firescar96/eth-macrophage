@@ -5,8 +5,10 @@ import {mount} from 'react-mounter';
 
 const MICROBE_ADDR = {ip: '127.0.0.1', port: 4000};
 const MACROPHAGE_ADDRS = [
-  {ip: '40.112.214.192', port: 4000},
-  {ip: '40.112.214.192', port: 4000},
+  {ip: 'macrophage1.westus.cloudapp.azure.com', port: 4000},
+  {ip: 'macrophage2.canadacentral.cloudapp.azure.com', port: 4000},
+  {ip: 'macrophage3.southcentralus.cloudapp.azure.com', port: 4000},
+  {ip: 'macrophage4.brazilsouth.cloudapp.azure.com', port: 4000},
 ];
 
 EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((bootnode) => {
@@ -20,9 +22,6 @@ EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((boot
       .then( (newNode) => {
         EthereumNetwork.toggleMacrophage(newNode);
         resolve();
-        /*newNode.addPeer().then(() => {
-          resolve();
-        });*/
       });
     });
     createNodePromises.push(defer);
