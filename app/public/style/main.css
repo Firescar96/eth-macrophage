@@ -1,34 +1,46 @@
-nav {
+header {
   border-bottom: solid 2px black; }
-  nav h1 {
+  header h1 {
     display: block;
     padding: 20px 0;
     text-align: center; }
+  header p {
+    text-align: center;
+    color: #4A4A4A; }
 
 main {
   display: flex; }
   main div#nodeSidebar {
     float: left; }
-    main div#nodeSidebar button.nodeReference {
+    main div#nodeSidebar button, main div#nodeSidebar button.nodeReference, main div#nodeSidebar button.active {
       display: block;
       position: relative;
-      margin: 10px;
+      margin: 20px 30px;
       padding: 0 5px;
       background-color: transparent;
-      border: solid 2px black;
+      border: solid 2px #4A4A4A;
       outline: none;
       font-size: 24px; }
+    main div#nodeSidebar button.nodeReference {
+      color: #4A4A4A; }
+    main div#nodeSidebar button.active {
+      color: #00e0ff; }
+    main div#nodeSidebar h2, main div#nodeSidebar p {
+      margin-left: 25px;
+      color: #4A4A4A; }
   main div#graphs {
     flex: 1; }
   main div#actionSidebar {
-    float: right; }
+    float: right;
+    color: #4A4A4A;
+    margin: 0 30px; }
     main div#actionSidebar button.nodeAction {
+      color: #4A4A4A;
       display: block;
       position: relative;
-      margin: 10px;
-      padding: 0 5px;
+      margin: 20px 0;
       background-color: transparent;
-      border: solid 2px black;
+      border: solid 2px #4A4A4A;
       outline: none;
       font-size: 24px; }
     main div#actionSidebar .tgl {

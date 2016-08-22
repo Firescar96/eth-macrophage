@@ -9,16 +9,16 @@ require('../sass/home.scss');
 let headline = (
   <header>
     <h1>Ethereum Macrophage</h1>
-    <p>Macrophage is a visual simulation of go-ethereum (geth) node. It is used for 
-    research & development. </p> 
+    <p>Macrophage is a visual simulation of go-ethereum (geth) node. It is used for
+      research & development. </p>
   </header>
 );
 
 /*eslint-disable no-unused-vars*/
 let NodeButton = React.createClass({
-/*eslint-enable no-unused-vars*/
+  /*eslint-enable no-unused-vars*/
   onClick () {
-    switch (this.props.role) {
+    switch (this.props.getSelectorType()) {
       case MICROBE:
         EthereumNetwork.toggleMicrobe(EthereumNetwork.getNodeByID(this.props.nodeID));
         break;
@@ -27,15 +27,13 @@ let NodeButton = React.createClass({
         break;
       default:
     }
-    networkGraph.setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
-  //  this.setState({selected:!this.state.selected});
-    this.props.getSelected(this.props.nodeID);
-   },
+    this.props.updateDOM();
+  },
   render () {
-    const click = (this.props.selectedId===this.props.nodeID) ? 'active':'nodeReference';
+    let node = EthereumNetwork.getNodeByID(this.props.nodeID);
     return (
-      <button className={click}
-              onClick={this.onClick}>
+      <button className={node.getRole()}
+        onClick={this.onClick}>
         {this.props.nodeID.substring(0, 10)}
       </button>
     );
@@ -97,12 +95,16 @@ var Home = React.createClass({
   shouldComponentUpdate (nextProps, nextState) {
     return nextState.shouldUpdateDOM;
   },
-  setSelectedID(Id){
-    this.setState({selectedID: Id});
+  updateDOM () {
+    this.setState({shouldUpdateDOM: true});
+  },
+  getSelectorType () {
+    return this.state.selectorType;
   },
   render () {
     let nodeButtons = this.state.peerIDs.map((id) => {
-      return (<NodeButton key={id} nodeID={id} role={this.state.selectorType} selectedId={this.state.selectedID} getSelected={this.setSelectedID.bind(this)} />);
+      return (<NodeButton key={id} nodeID={id} getSelectorType={this.getSelectorType}
+        updateDOM={this.updateDOM} />);
     });
 
     let isNodeSelected = !!EthereumNetwork.getMicrobe();

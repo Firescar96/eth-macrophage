@@ -55,7 +55,7 @@
 	var _reactMounter = __webpack_require__(171);
 
 	var MICROBE_ADDR = { ip: '127.0.0.1', port: 4000 };
-	var MACROPHAGE_ADDRS = [{ ip: '40.112.214.192', port: 4000 }, { ip: '40.112.214.192', port: 4000 }];
+	var MACROPHAGE_ADDRS = [{ ip: '127.0.0.1', port: 4000 }];
 
 	_EthereumNetwork.EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
 	  _EthereumNetwork.EthereumNetwork.toggleMicrobe(bootnode);
@@ -246,9 +246,10 @@
 	EthereumNetwork.toggleMicrobe = function (_microbe) {
 	  var _this = this;
 
-	  if (_microbe.getRole() === _globals.MICROBE) {
-	    this._selectedMicrobe = null;
+	  if (this._selectedMicrobe && this._selectedMicrobe != _microbe) return;
+	  if (_microbe.getRole().localeCompare(_globals.MICROBE) === 0) {
 	    _microbe.setRole('');
+	    this._selectedMicrobe = null;
 	    return;
 	  }
 
@@ -271,6 +272,11 @@
 	  return this._selectedMicrobe;
 	};
 
+	EthereumNetwork.isMicrobe = function (_microbe) {
+	  if (!this._selectedMicrobe) return false;
+	  return this._selectedMicrobe.nodeID.localeCompare(_microbe.nodeID) === 0;
+	};
+
 	EthereumNetwork.toggleMacrophage = function (_macrophage) {
 	  if (_macrophage === this._selectedMicrobe) {
 	    return;
@@ -281,6 +287,10 @@
 
 	EthereumNetwork.getMacrophages = function () {
 	  return EthereumNetwork.macrophageManager.getMacrophages();
+	};
+
+	EthereumNetwork.isMacrophage = function (_macrophage) {
+	  return EthereumNetwork.macrophageManager.isMacrophage(_macrophage);
 	};
 
 	window.EthereumNetwork = EthereumNetwork;
@@ -339,7 +349,9 @@
 	    key: 'toggleMacrophage',
 	    value: function toggleMacrophage(_macrophage) {
 	      if (_macrophage.getRole() === _globals.MACROPHAGE) {
-	        var macrophageIndex = this._macrophages.indexOf(_macrophage);
+	        var macrophageIndex = this._macrophages.map(function (m) {
+	          return m.nodeID;
+	        }).indexOf(_macrophage.nodeID);
 	        this._macrophages.splice(macrophageIndex, 1);
 	        _macrophage.setRole('');
 	        return;
@@ -352,6 +364,13 @@
 	    key: 'getMacrophages',
 	    value: function getMacrophages() {
 	      return this._macrophages;
+	    }
+	  }, {
+	    key: 'isMacrophage',
+	    value: function isMacrophage(_macrophage) {
+	      return this._macrophages.map(function (m) {
+	        return m.nodeID;
+	      }).indexOf(_macrophage.nodeID) > -1;
 	    }
 	  }, {
 	    key: 'pruneDuplicatePeers',
@@ -730,13 +749,18 @@
 
 	__webpack_require__(167);
 
-	var navbar = _react2.default.createElement(
-	  'nav',
+	var headline = _react2.default.createElement(
+	  'header',
 	  null,
 	  _react2.default.createElement(
 	    'h1',
 	    null,
 	    'Ethereum Macrophage'
+	  ),
+	  _react2.default.createElement(
+	    'p',
+	    null,
+	    'Macrophage is a visual simulation of go-ethereum (geth) node. It is used for research & development. '
 	  )
 	);
 
@@ -746,7 +770,7 @@
 
 	  /*eslint-enable no-unused-vars*/
 	  onClick: function onClick() {
-	    switch (this.props.role) {
+	    switch (this.props.getSelectorType()) {
 	      case _globals.MICROBE:
 	        _EthereumNetwork.EthereumNetwork.toggleMicrobe(_EthereumNetwork.EthereumNetwork.getNodeByID(this.props.nodeID));
 	        break;
@@ -755,12 +779,13 @@
 	        break;
 	      default:
 	    }
-	    _NetworkGraph.networkGraph.setSelectedNode(_EthereumNetwork.EthereumNetwork.getNodeByID(this.props.nodeID));
+	    this.props.updateDOM();
 	  },
 	  render: function render() {
+	    var node = _EthereumNetwork.EthereumNetwork.getNodeByID(this.props.nodeID);
 	    return _react2.default.createElement(
 	      'button',
-	      { className: 'nodeReference',
+	      { className: node.getRole(),
 	        onClick: this.onClick },
 	      this.props.nodeID.substring(0, 10)
 	    );
@@ -827,11 +852,18 @@
 	  shouldComponentUpdate: function shouldComponentUpdate(nextProps, nextState) {
 	    return nextState.shouldUpdateDOM;
 	  },
+	  updateDOM: function updateDOM() {
+	    this.setState({ shouldUpdateDOM: true });
+	  },
+	  getSelectorType: function getSelectorType() {
+	    return this.state.selectorType;
+	  },
 	  render: function render() {
 	    var _this = this;
 
 	    var nodeButtons = this.state.peerIDs.map(function (id) {
-	      return _react2.default.createElement(NodeButton, { key: id, nodeID: id, selectedRole: _this.state.selectorType });
+	      return _react2.default.createElement(NodeButton, { key: id, nodeID: id, getSelectorType: _this.getSelectorType,
+	        updateDOM: _this.updateDOM });
 	    });
 
 	    var isNodeSelected = !!_EthereumNetwork.EthereumNetwork.getMicrobe();
@@ -839,13 +871,23 @@
 	    return _react2.default.createElement(
 	      'div',
 	      null,
-	      navbar,
+	      headline,
 	      _react2.default.createElement(
 	        'main',
 	        null,
 	        _react2.default.createElement(
 	          'div',
 	          { id: 'nodeSidebar' },
+	          _react2.default.createElement(
+	            'h2',
+	            null,
+	            'Nodes list'
+	          ),
+	          _react2.default.createElement(
+	            'p',
+	            null,
+	            'You can select nodes by clicking its ID.'
+	          ),
 	          nodeButtons
 	        ),
 	        _react2.default.createElement(
@@ -858,8 +900,13 @@
 	          'div',
 	          { id: 'actionSidebar' },
 	          _react2.default.createElement(
+	            'h3',
+	            null,
+	            'Action Panel'
+	          ),
+	          _react2.default.createElement(
 	            'button',
-	            { className: 'nodeAction', onClick: this.addNode, disabled: true },
+	            { className: 'nodeAction', onClick: this.addNode },
 	            'add node'
 	          ),
 	          _react2.default.createElement(
@@ -21139,7 +21186,6 @@
 	}();
 
 	var messageGraph = new MessageGraph();
-	window.messageGraph = messageGraph;
 	exports.messageGraph = messageGraph;
 
 /***/ },
