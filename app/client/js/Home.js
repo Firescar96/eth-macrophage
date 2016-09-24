@@ -6,30 +6,33 @@ import {analysis} from './Analysis.js';
 import {MICROBE, MACROPHAGE, CONNECTION, GODSNODE} from './lib/globals.js';
 require('../sass/home.scss');
 
-let navbar = (
-  <nav>
+let headline = (
+  <header>
     <h1>Ethereum Macrophage</h1>
-  </nav>
+    <p>Macrophage is a visual simulation of go-ethereum (geth) node. It is used for
+      research & development. </p>
+  </header>
 );
 
 /*eslint-disable no-unused-vars*/
 let NodeButton = React.createClass({
   /*eslint-enable no-unused-vars*/
   onClick () {
-    switch (this.props.role) {
+    switch (this.props.getSelectorType()) {
       case MICROBE:
-      EthereumNetwork.toggleMicrobe(EthereumNetwork.getNodeByID(this.props.nodeID));
-      break;
+        EthereumNetwork.toggleMicrobe(EthereumNetwork.getNodeByID(this.props.nodeID));
+        break;
       case MACROPHAGE:
-      EthereumNetwork.toggleMacrophage(EthereumNetwork.getNodeByID(this.props.nodeID));
-      break;
+        EthereumNetwork.toggleMacrophage(EthereumNetwork.getNodeByID(this.props.nodeID));
+        break;
       default:
     }
-    networkGraph.setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
+    this.props.updateDOM();
   },
   render () {
+    let node = EthereumNetwork.getNodeByID(this.props.nodeID);
     return (
-      <button className="nodeReference"
+      <button className={'nodeReference ' + node.getRole()}
         onClick={this.onClick}>
         {this.props.nodeID.substring(0, 10)}
       </button>
@@ -96,26 +99,35 @@ var Home = React.createClass({
   shouldComponentUpdate (nextProps, nextState) {
     return nextState.shouldUpdateDOM;
   },
+  updateDOM () {
+    this.setState({shouldUpdateDOM: true});
+  },
+  getSelectorType () {
+    return this.state.selectorType;
+  },
   render () {
     let nodeButtons = this.state.peerIDs.map((id) => {
-      return (<NodeButton key={id} nodeID={id} selectedRole={this.state.selectorType}/>);
+      return (<NodeButton key={id} nodeID={id} getSelectorType={this.getSelectorType}
+        updateDOM={this.updateDOM} />);
     });
 
     let isNodeSelected = !!EthereumNetwork.getMicrobe();
 
     return (
       <div>
-        {navbar}
+        {headline}
 
         <main>
           <div id="networkDashboard">
             <div id="nodeSidebar">
+              <h2>Nodes list</h2>
               {nodeButtons}
             </div>
 
             <div id="networkGraph"></div>
 
             <div id="actionSidebar">
+             <h2>Action Panel</h2>
               <button className="nodeAction" onClick={this.addNode} disabled>
                 add node
               </button>

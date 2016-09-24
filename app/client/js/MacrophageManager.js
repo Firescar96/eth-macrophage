@@ -11,7 +11,7 @@ class MacrophageManager {
 
   toggleMacrophage (_macrophage) {
     if(_macrophage.getRole() === MACROPHAGE) {
-      let macrophageIndex = this._macrophages.indexOf(_macrophage);
+      let macrophageIndex = this._macrophages.map((m) => m.nodeID).indexOf(_macrophage.nodeID);
       this._macrophages.splice(macrophageIndex, 1);
       _macrophage.setRole('');
       return;
@@ -23,6 +23,10 @@ class MacrophageManager {
 
   getMacrophages () {
     return this._macrophages;
+  }
+
+  isMacrophage (_macrophage) {
+    return this._macrophages.map((m) => m.nodeID).indexOf(_macrophage.nodeID) > -1;
   }
 
   pruneDuplicatePeers () {

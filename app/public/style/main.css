@@ -1,25 +1,40 @@
-nav {
+header {
   border-bottom: solid 2px black; }
-  nav h1 {
+  header h1 {
     display: block;
     padding: 20px 0;
     text-align: center; }
+  header p {
+    text-align: center;
+    color: #4A4A4A; }
 
 main div#networkDashboard {
   display: flex;
   flex-direction: row; }
   main div#networkDashboard div#nodeSidebar {
     float: left;
-    width: 175px; }
-    main div#networkDashboard div#nodeSidebar button.nodeReference {
+    width: 175px;
+    text-align: center;
+    color: #4A4A4A; }
+    main div#networkDashboard div#nodeSidebar button {
+      margin: 10px 0;
+      margin-right: auto;
       display: block;
       position: relative;
-      margin: 10px;
       padding: 0 5px;
       background-color: transparent;
       border: solid 2px black;
       outline: none;
       font-size: 24px; }
+      main div#networkDashboard div#nodeSidebar button.nodeReference {
+        color: #4A4A4A; }
+      main div#networkDashboard div#nodeSidebar button.microbe {
+        color: #00e0ff; }
+      main div#networkDashboard div#nodeSidebar button.macrophage {
+        color: #f00; }
+    main div#networkDashboard div#nodeSidebar h2, main div#networkDashboard div#nodeSidebar p {
+      margin-left: 25px;
+      color: #4A4A4A; }
   main div#networkDashboard div#networkGraph {
     flex: 1; }
     main div#networkDashboard div#networkGraph > * {
@@ -27,14 +42,16 @@ main div#networkDashboard {
       height: 100%; }
   main div#networkDashboard div#actionSidebar {
     float: right;
-    width: 150px; }
+    color: #4A4A4A;
+    text-align: center; }
     main div#networkDashboard div#actionSidebar button.nodeAction {
+      margin: 10px 0;
+      margin-left: auto;
+      color: #4A4A4A;
       display: block;
       position: relative;
-      margin: 10px;
-      padding: 0 5px;
       background-color: transparent;
-      border: solid 2px black;
+      border: solid 2px #4A4A4A;
       outline: none;
       font-size: 24px; }
     main div#networkDashboard div#actionSidebar .tgl {

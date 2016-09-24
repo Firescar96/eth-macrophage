@@ -103,9 +103,10 @@ EthereumNetwork.nodeFilter = function (callback) {
 };
 
 EthereumNetwork.toggleMicrobe = function (_microbe) {
-  if(_microbe.getRole() === MICROBE) {
-    this._selectedMicrobe = null;
+  if(this._selectedMicrobe && this._selectedMicrobe != _microbe)return;
+  if(_microbe.getRole().localeCompare(MICROBE) === 0) {
     _microbe.setRole('');
+    this._selectedMicrobe = null;
     return;
   }
 
@@ -121,6 +122,11 @@ EthereumNetwork.getMicrobe = function () {
   return this._selectedMicrobe;
 };
 
+EthereumNetwork.isMicrobe = function (_microbe) {
+  if(!this._selectedMicrobe)return false;
+  return this._selectedMicrobe.nodeID.localeCompare(_microbe.nodeID) === 0;
+};
+
 EthereumNetwork.toggleMacrophage = function (_macrophage) {
   if(_macrophage === this._selectedMicrobe) {
     return;
@@ -131,6 +137,10 @@ EthereumNetwork.toggleMacrophage = function (_macrophage) {
 
 EthereumNetwork.getMacrophages = function () {
   return EthereumNetwork.macrophageManager.getMacrophages();
+};
+
+EthereumNetwork.isMacrophage = function (_macrophage) {
+  return EthereumNetwork.macrophageManager.isMacrophage(_macrophage);
 };
 
 window.EthereumNetwork = EthereumNetwork;

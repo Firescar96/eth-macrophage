@@ -1,12 +1,21 @@
 @import "./mixins";
 
-nav {
+$defaultFontColor: #4A4A4A;
+$heightColor: #a30000;
+$bgColor: #fff;
+$blue:  #00e0ff;
+$red: #f00;
+
+header {
   h1 {
     display: block;
     padding: 20px 0;
     text-align: center;
   }
-
+  p{
+    text-align:center;
+    color: $defaultFontColor;
+  }
   border-bottom: solid 2px black;
 }
 
@@ -18,15 +27,35 @@ main {
     div#nodeSidebar {
       float: left;
       width: 175px;
-      button.nodeReference {
+      text-align: center;
+      color: $defaultFontColor;
+
+      button {
+        margin: 10px 0;
+        margin-right: auto;
         display: block;
         position: relative;
-        margin: 10px;
         padding: 0 5px;
         background-color: transparent;
         border: solid 2px black;
         outline: none;
         font-size: 24px;
+
+        &.nodeReference {
+          color: $defaultFontColor;
+        }
+
+        &.microbe {
+          color: $blue;
+        }
+
+        &.macrophage {
+          color: $red;
+        }
+      }
+      h2, p{
+        margin-left: 25px;
+        color: $defaultFontColor;
       }
     }
 
@@ -41,15 +70,17 @@ main {
 
     div#actionSidebar {
       float: right;
-      width: 150px;
-
+      color: $defaultFontColor;
+      text-align: center;
       button.nodeAction {
+        margin: 10px 0;
+        margin-left: auto;
+        color: $defaultFontColor;
         display: block;
         position: relative;
-        margin: 10px;
-        padding: 0 5px;
+        //margin: 20px 0;
         background-color: transparent;
-        border: solid 2px black;
+        border: solid 2px $defaultFontColor;
         outline: none;
         font-size: 24px;
       }
