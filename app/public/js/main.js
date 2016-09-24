@@ -246,22 +246,13 @@
 	};
 
 	EthereumNetwork.toggleMicrobe = function (_microbe) {
-	  var _this = this;
-
 	  if (_microbe.getRole() === _globals.MICROBE) {
 	    this._selectedMicrobe = null;
 	    _microbe.setRole('');
 	    return;
 	  }
 
-	  var alreadySelected = false;
-	  EthereumNetwork.getMacrophages().some(function (macrophage, i) {
-	    if (macrophage === _this._selectedMicrobe) {
-	      alreadySelected = true;
-	      return;
-	    }
-	  });
-	  if (alreadySelected) {
+	  if (EthereumNetwork.macrophageManager.isMacrophage(_microbe)) {
 	    return;
 	  }
 
@@ -383,6 +374,14 @@
 	            _this._knownPeersConnections[peer.ID] += 1;
 	          });
 	        });
+	      });
+	    }
+	  }, {
+	    key: 'isMacrophage',
+	    value: function isMacrophage(_macrophage) {
+	      return this._macrophages.some(function (macrophage, i) {
+	        if (macrophage == _macrophage) return true;
+	        return false;
 	      });
 	    }
 	  }]);

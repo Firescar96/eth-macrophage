@@ -109,14 +109,7 @@ EthereumNetwork.toggleMicrobe = function (_microbe) {
     return;
   }
 
-  let alreadySelected = false;
-  EthereumNetwork.getMacrophages().some((macrophage, i) => {
-    if(macrophage === this._selectedMicrobe) {
-      alreadySelected = true;
-      return;
-    }
-  });
-  if(alreadySelected) {
+  if(EthereumNetwork.macrophageManager.isMacrophage(_microbe)) {
     return;
   }
 

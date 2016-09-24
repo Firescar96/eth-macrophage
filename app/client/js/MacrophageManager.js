@@ -49,6 +49,12 @@ class MacrophageManager {
     });
   }
 
+  isMacrophage (_macrophage) {
+    return this._macrophages.some((macrophage, i) => {
+      if(macrophage == _macrophage)return true;
+      return false;
+    });
+  }
 }
 
 let macrophageManager = new MacrophageManager();
