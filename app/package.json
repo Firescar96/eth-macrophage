@@ -1,6 +1,6 @@
 {
   "name": "eth-macrophage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Experiments of Ethereum node peer selection",
   "main": "app.js",
   "dependencies": {
