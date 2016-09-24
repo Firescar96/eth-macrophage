@@ -8,117 +8,135 @@ header {
     text-align: center;
     color: #4A4A4A; }
 
-main {
-  display: flex; }
-  main div#nodeSidebar {
-    float: left; }
-    main div#nodeSidebar button, main div#nodeSidebar button.nodeReference, main div#nodeSidebar button.active {
+main div#networkDashboard {
+  display: flex;
+  flex-direction: row; }
+  main div#networkDashboard div#nodeSidebar {
+    float: left;
+    width: 175px;
+    text-align: center;
+    color: #4A4A4A; }
+    main div#networkDashboard div#nodeSidebar button {
+      margin: 10px 0;
+      margin-right: auto;
       display: block;
       position: relative;
-      margin: 20px 30px;
       padding: 0 5px;
       background-color: transparent;
-      border: solid 2px #4A4A4A;
+      border: solid 2px black;
       outline: none;
       font-size: 24px; }
-    main div#nodeSidebar button.nodeReference {
-      color: #4A4A4A; }
-    main div#nodeSidebar button.active {
-      color: #00e0ff; }
-    main div#nodeSidebar h2, main div#nodeSidebar p {
+      main div#networkDashboard div#nodeSidebar button.nodeReference {
+        color: #4A4A4A; }
+      main div#networkDashboard div#nodeSidebar button.microbe {
+        color: #00e0ff; }
+      main div#networkDashboard div#nodeSidebar button.macrophage {
+        color: #f00; }
+    main div#networkDashboard div#nodeSidebar h2, main div#networkDashboard div#nodeSidebar p {
       margin-left: 25px;
       color: #4A4A4A; }
-  main div#graphs {
+  main div#networkDashboard div#networkGraph {
     flex: 1; }
-  main div#actionSidebar {
+    main div#networkDashboard div#networkGraph > * {
+      width: 100%;
+      height: 100%; }
+  main div#networkDashboard div#actionSidebar {
     float: right;
     color: #4A4A4A;
-    margin: 0 30px; }
-    main div#actionSidebar button.nodeAction {
+    text-align: center; }
+    main div#networkDashboard div#actionSidebar button.nodeAction {
+      margin: 10px 0;
+      margin-left: auto;
       color: #4A4A4A;
       display: block;
       position: relative;
-      margin: 20px 0;
       background-color: transparent;
       border: solid 2px #4A4A4A;
       outline: none;
       font-size: 24px; }
-    main div#actionSidebar .tgl {
+    main div#networkDashboard div#actionSidebar .tgl {
       display: none; }
-      main div#actionSidebar .tgl, main div#actionSidebar .tgl:after, main div#actionSidebar .tgl:before,
-      main div#actionSidebar .tgl *,
-      main div#actionSidebar .tgl *:after,
-      main div#actionSidebar .tgl *:before,
-      main div#actionSidebar .tgl + .tgl-btn {
+      main div#networkDashboard div#actionSidebar .tgl, main div#networkDashboard div#actionSidebar .tgl:after, main div#networkDashboard div#actionSidebar .tgl:before,
+      main div#networkDashboard div#actionSidebar .tgl *,
+      main div#networkDashboard div#actionSidebar .tgl *:after,
+      main div#networkDashboard div#actionSidebar .tgl *:before,
+      main div#networkDashboard div#actionSidebar .tgl + .tgl-btn {
         box-sizing: border-box; }
-        main div#actionSidebar .tgl::selection, main div#actionSidebar .tgl:after::selection, main div#actionSidebar .tgl:before::selection,
-        main div#actionSidebar .tgl *::selection,
-        main div#actionSidebar .tgl *:after::selection,
-        main div#actionSidebar .tgl *:before::selection,
-        main div#actionSidebar .tgl + .tgl-btn::selection {
+        main div#networkDashboard div#actionSidebar .tgl::selection, main div#networkDashboard div#actionSidebar .tgl:after::selection, main div#networkDashboard div#actionSidebar .tgl:before::selection,
+        main div#networkDashboard div#actionSidebar .tgl *::selection,
+        main div#networkDashboard div#actionSidebar .tgl *:after::selection,
+        main div#networkDashboard div#actionSidebar .tgl *:before::selection,
+        main div#networkDashboard div#actionSidebar .tgl + .tgl-btn::selection {
           background: none; }
-      main div#actionSidebar .tgl + .tgl-btn {
+      main div#networkDashboard div#actionSidebar .tgl + .tgl-btn {
         outline: 0;
         display: block;
         width: 4em;
         height: 2em;
         position: relative; }
-        main div#actionSidebar .tgl + .tgl-btn:after, main div#actionSidebar .tgl + .tgl-btn:before {
+        main div#networkDashboard div#actionSidebar .tgl + .tgl-btn:after, main div#networkDashboard div#actionSidebar .tgl + .tgl-btn:before {
           position: relative;
           display: block;
           content: "";
           width: 50%;
           height: 100%; }
-        main div#actionSidebar .tgl + .tgl-btn:after {
+        main div#networkDashboard div#actionSidebar .tgl + .tgl-btn:after {
           left: 0; }
-        main div#actionSidebar .tgl + .tgl-btn:before {
+        main div#networkDashboard div#actionSidebar .tgl + .tgl-btn:before {
           display: none; }
-      main div#actionSidebar .tgl:checked + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl:checked + .tgl-btn:after {
         left: 50%; }
-    main div#actionSidebar .tgl-flat#microbeSelector + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#microbeSelector + .tgl-btn {
       border: 4px solid #99afb3; }
-      main div#actionSidebar .tgl-flat#microbeSelector + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#microbeSelector + .tgl-btn:after {
         background: #b3f6ff; }
-    main div#actionSidebar .tgl-flat#microbeSelector:checked + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#microbeSelector:checked + .tgl-btn {
       border: 4px solid #00cae6; }
-      main div#actionSidebar .tgl-flat#microbeSelector:checked + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#microbeSelector:checked + .tgl-btn:after {
         background: #08e1ff; }
-    main div#actionSidebar .tgl-flat#macrophageSelector + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#macrophageSelector + .tgl-btn {
       border: 4px solid #a99999; }
-      main div#actionSidebar .tgl-flat#macrophageSelector + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#macrophageSelector + .tgl-btn:after {
         background: #e3b3b3; }
-    main div#actionSidebar .tgl-flat#macrophageSelector:checked + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#macrophageSelector:checked + .tgl-btn {
       border: 4px solid #930000; }
-      main div#actionSidebar .tgl-flat#macrophageSelector:checked + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#macrophageSelector:checked + .tgl-btn:after {
         background: #a60808; }
-    main div#actionSidebar .tgl-flat#connectionsSelector + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#connectionsSelector + .tgl-btn {
       border: 4px solid #9caa99; }
-      main div#actionSidebar .tgl-flat#connectionsSelector + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#connectionsSelector + .tgl-btn:after {
         background: #bde6b3; }
-    main div#actionSidebar .tgl-flat#connectionsSelector:checked + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#connectionsSelector:checked + .tgl-btn {
       border: 4px solid #1f9900; }
-      main div#actionSidebar .tgl-flat#connectionsSelector:checked + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#connectionsSelector:checked + .tgl-btn:after {
         background: #29ad08; }
-    main div#actionSidebar .tgl-flat#godsnodeSelector + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#godsnodeSelector + .tgl-btn {
       border: 4px solid #a399a8; }
-      main div#actionSidebar .tgl-flat#godsnodeSelector + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#godsnodeSelector + .tgl-btn:after {
         background: #cfb3df; }
-    main div#actionSidebar .tgl-flat#godsnodeSelector:checked + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat#godsnodeSelector:checked + .tgl-btn {
       border: 4px solid #560085; }
-      main div#actionSidebar .tgl-flat#godsnodeSelector:checked + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat#godsnodeSelector:checked + .tgl-btn:after {
         background: #650897; }
-    main div#actionSidebar .tgl-flat + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat + .tgl-btn {
       margin: auto;
       padding: 2px;
       transition: all .2s ease;
       background: #fff;
       border-radius: 2em; }
-      main div#actionSidebar .tgl-flat + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat + .tgl-btn:after {
         transition: all .2s ease;
         content: "";
         border-radius: 1em; }
-    main div#actionSidebar .tgl-flat:checked + .tgl-btn {
+    main div#networkDashboard div#actionSidebar .tgl-flat:checked + .tgl-btn {
       border: 4px solid #f00; }
-      main div#actionSidebar .tgl-flat:checked + .tgl-btn:after {
+      main div#networkDashboard div#actionSidebar .tgl-flat:checked + .tgl-btn:after {
         left: 50%;
         background: #f00; }
+
+main div#messageGraph {
+  overflow-x: auto;
+  text-align: center; }
+  main div#messageGraph svg {
+    min-width: 400px;
+    min-height: 400px; }

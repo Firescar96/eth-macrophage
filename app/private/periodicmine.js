@@ -4,24 +4,27 @@
 (function() {
   var main = function () {
     /* TODO: Find a way to load mining config from YML.
+
     if (!loadScript("config.js")) {
       console.log("== config.js not found");
     }
+
     if (typeof(config) === "undefined") {
       config = {};
       console.log("== config is undefined, proceeding with defaults");
     }
+
     In the meantime, just set an empty config object.
     */
     config = {}
 
     defaults = {
       interval_ms: 15000,
-      initial_ether: 1000000000000000000,
+      initial_ether: 15000000000000000000,
       mine_pending_txns: false,
       mine_periodically: true,
       mine_normally: false,
-      threads: 1,
+      threads: 1
     }
 
     for (key in defaults) {

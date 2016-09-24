@@ -8,7 +8,7 @@ const MACROPHAGE_ADDRS = [
   {ip: '127.0.0.1', port: 4000},
 ];
 
-EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((bootnode) => {
+EthereumNetwork.createNode(true, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((bootnode) => {
   EthereumNetwork.toggleMicrobe(bootnode);
 
   EthereumNetwork.setDefaultBootnode(bootnode);
@@ -19,9 +19,6 @@ EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((boot
       .then( (newNode) => {
         EthereumNetwork.toggleMacrophage(newNode);
         resolve();
-        /*newNode.addPeer().then(() => {
-          resolve();
-        });*/
       });
     });
     createNodePromises.push(defer);

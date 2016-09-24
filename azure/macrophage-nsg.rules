@@ -1,0 +1,4 @@
+AllowInboundTCP TCP Inbound 1000 0.0.0.0/0 0.0.0.0/0 0-65535 Allow
+AllowInboundUDP UDP Inbound 1001 0.0.0.0/0 0.0.0.0/0 0-65535 Allow
+AllowOutboundTCP TCP Outbound 1000 0.0.0.0/0 0.0.0.0/0 0-65535 Allow
+AllowOutboundUDP UDP Outbound 1001 0.0.0.0/0 0.0.0.0/0 0-65535 Allow

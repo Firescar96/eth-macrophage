@@ -57,7 +57,7 @@
 	var MICROBE_ADDR = { ip: '127.0.0.1', port: 4000 };
 	var MACROPHAGE_ADDRS = [{ ip: '127.0.0.1', port: 4000 }];
 
-	_EthereumNetwork.EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
+	_EthereumNetwork.EthereumNetwork.createNode(true, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
 	  _EthereumNetwork.EthereumNetwork.toggleMicrobe(bootnode);
 
 	  _EthereumNetwork.EthereumNetwork.setDefaultBootnode(bootnode);
@@ -67,9 +67,6 @@
 	      _EthereumNetwork.EthereumNetwork.createNode(false, macrophageAddr.ip, macrophageAddr.port).then(function (newNode) {
 	        _EthereumNetwork.EthereumNetwork.toggleMacrophage(newNode);
 	        resolve();
-	        /*newNode.addPeer().then(() => {
-	          resolve();
-	        });*/
 	      });
 	    });
 	    createNodePromises.push(defer);
@@ -157,7 +154,7 @@
 	EthereumNetwork._nodeFilterCallbacks = [];
 
 	EthereumNetwork._defaultBootnode;
-	EthereumNetwork._currentNonce = 0;
+	EthereumNetwork._currentNonce = {};
 
 	EthereumNetwork._selectedMicrobe = null;
 	EthereumNetwork.macrophageManager = _MacrophageManager.macrophageManager;
@@ -185,7 +182,12 @@
 	* @return {Promise}
 	*/
 	EthereumNetwork.createNode = function (isMiner, serverIP, serverPort) {
-	  var currentNonce = EthereumNetwork._currentNonce++;
+	  var nonceKey = serverIP + serverPort;
+	  if (!EthereumNetwork._currentNonce[nonceKey]) {
+	    EthereumNetwork._currentNonce[nonceKey] = 0;
+	  }
+
+	  var currentNonce = EthereumNetwork._currentNonce[nonceKey]++;
 	  var defer = new Promise(function (resolve, reject) {
 	    var newNode = new _EthereumNode.EthereumNode(currentNonce, serverIP, serverPort);
 
@@ -244,8 +246,6 @@
 	};
 
 	EthereumNetwork.toggleMicrobe = function (_microbe) {
-	  var _this = this;
-
 	  if (this._selectedMicrobe && this._selectedMicrobe != _microbe) return;
 	  if (_microbe.getRole().localeCompare(_globals.MICROBE) === 0) {
 	    _microbe.setRole('');
@@ -253,14 +253,7 @@
 	    return;
 	  }
 
-	  var alreadySelected = false;
-	  EthereumNetwork.getMacrophages().some(function (macrophage, i) {
-	    if (macrophage === _this._selectedMicrobe) {
-	      alreadySelected = true;
-	      return;
-	    }
-	  });
-	  if (alreadySelected) {
+	  if (EthereumNetwork.macrophageManager.isMacrophage(_microbe)) {
 	    return;
 	  }
 
@@ -402,6 +395,14 @@
 	        });
 	      });
 	    }
+	  }, {
+	    key: 'isMacrophage',
+	    value: function isMacrophage(_macrophage) {
+	      return this._macrophages.some(function (macrophage, i) {
+	        if (macrophage == _macrophage) return true;
+	        return false;
+	      });
+	    }
 	  }]);
 
 	  return MacrophageManager;
@@ -430,9 +431,6 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var EthereumNode = function () {
-
-	  //TODO: for some reason using constructor doesn't work with nodejs
-
 	  function EthereumNode(id, serverIP, serverPort) {
 	    var _this = this;
 
@@ -465,6 +463,7 @@
 	    };
 	    this.web3 = null;
 	    this.nodeID = '';
+	    this.enode = '';
 	    this.filter = null;
 	    this.defaultAccount = null;
 	    this._role = '';
@@ -561,6 +560,7 @@
 	            var nodeInfo = _ref4[1];
 
 	            _this3.nodeID = nodeInfo.id;
+	            _this3.enode = nodeInfo.enode;
 	            return _this3.getAccounts();
 	          }).then(function (_ref5) {
 	            var _ref6 = _slicedToArray(_ref5, 2);
@@ -622,12 +622,12 @@
 
 	  }, {
 	    key: 'addPeer',
-	    value: function addPeer(nodeID) {
+	    value: function addPeer(_enode) {
 	      var _this7 = this;
 
-	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
+	      var enode = _enode || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().enode;
 	      var defer = new Promise(function (fufill, reject) {
-	        _this7.web3.admin.addPeer(nodeID, function (err, result) {
+	        _this7.web3.admin.addPeer(enode, function (err, result) {
 	          fufill([err, result]);
 	        });
 	      });
@@ -644,7 +644,7 @@
 	      var addPeerPromises = [];
 
 	      _EthereumNetwork.EthereumNetwork.getNodeIDs().forEach(function (nodeID) {
-	        var defer = _this8.addPeer(nodeInfo.id);
+	        var defer = _this8.addPeer(_EthereumNetwork.EthereumNetwork.getNodeByID(nodeID).enode);
 	        addPeerPromises.push(defer);
 	      });
 
@@ -660,12 +660,12 @@
 
 	  }, {
 	    key: 'removePeer',
-	    value: function removePeer(nodeID) {
+	    value: function removePeer(_enode) {
 	      var _this9 = this;
 
-	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
+	      var enode = _enode || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().enode;
 	      var defer = new Promise(function (fufill, reject) {
-	        _this9.web3.admin.removePeer(nodeID, function (err, result) {
+	        _this9.web3.admin.removePeer(enode, function (err, result) {
 	          fufill([err, result]);
 	        });
 	      });
@@ -785,7 +785,7 @@
 	    var node = _EthereumNetwork.EthereumNetwork.getNodeByID(this.props.nodeID);
 	    return _react2.default.createElement(
 	      'button',
-	      { className: node.getRole(),
+	      { className: 'nodeReference ' + node.getRole(),
 	        onClick: this.onClick },
 	      this.props.nodeID.substring(0, 10)
 	    );
@@ -839,6 +839,10 @@
 	      var err = _ref2[0];
 	      var result = _ref2[1];
 
+	      if (err) {
+	        console.error(err);
+	        return;
+	      }
 	      console.log(result);
 	      _Analysis.analysis.addMicrobeTxHash(result);
 	    });
@@ -877,80 +881,75 @@
 	        null,
 	        _react2.default.createElement(
 	          'div',
-	          { id: 'nodeSidebar' },
+	          { id: 'networkDashboard' },
 	          _react2.default.createElement(
-	            'h2',
-	            null,
-	            'Nodes list'
+	            'div',
+	            { id: 'nodeSidebar' },
+	            _react2.default.createElement(
+	              'h2',
+	              null,
+	              'Nodes list'
+	            ),
+	            nodeButtons
 	          ),
-	          _react2.default.createElement(
-	            'p',
-	            null,
-	            'You can select nodes by clicking its ID.'
-	          ),
-	          nodeButtons
-	        ),
-	        _react2.default.createElement(
-	          'div',
-	          { id: 'graphs' },
 	          _react2.default.createElement('div', { id: 'networkGraph' }),
-	          _react2.default.createElement('div', { id: 'messageGraph' })
+	          _react2.default.createElement(
+	            'div',
+	            { id: 'actionSidebar' },
+	            _react2.default.createElement(
+	              'h2',
+	              null,
+	              'Action Panel'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.addNode, disabled: true },
+	              'add node'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', disabled: true },
+	              'remove node'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.addAllPeers, disabled: !isNodeSelected },
+	              'connect to all peers'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.sendMessage, disabled: !isNodeSelected },
+	              'send message'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.runEMAnalysis },
+	              'run EM analysis'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.resetAnalysis },
+	              'reset analysis'
+	            ),
+	            _react2.default.createElement('input', { id: 'microbeSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.MICROBE) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.MICROBE }),
+	            _react2.default.createElement('label', { htmlFor: 'microbeSelector', className: 'tgl-btn' }),
+	            _react2.default.createElement('input', { id: 'macrophageSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.MACROPHAGE) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.MACROPHAGE }),
+	            _react2.default.createElement('label', { htmlFor: 'macrophageSelector', className: 'tgl-btn' }),
+	            _react2.default.createElement('input', { id: 'connectionsSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.CONNECTION) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.CONNECTION }),
+	            _react2.default.createElement('label', { htmlFor: 'connectionsSelector', className: 'tgl-btn' }),
+	            _react2.default.createElement('input', { id: 'godsnodeSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.GODSNODE) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.GODSNODE }),
+	            _react2.default.createElement('label', { htmlFor: 'godsnodeSelector', className: 'tgl-btn' })
+	          )
 	        ),
-	        _react2.default.createElement(
-	          'div',
-	          { id: 'actionSidebar' },
-	          _react2.default.createElement(
-	            'h3',
-	            null,
-	            'Action Panel'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.addNode },
-	            'add node'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', disabled: true },
-	            'remove node'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.addAllPeers, disabled: !isNodeSelected },
-	            'connect to all peers'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.sendMessage, disabled: !isNodeSelected },
-	            'send message'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.runEMAnalysis },
-	            'run EM analysis'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.resetAnalysis },
-	            'reset analysis'
-	          ),
-	          _react2.default.createElement('input', { id: 'microbeSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.MICROBE) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.MICROBE }),
-	          _react2.default.createElement('label', { htmlFor: 'microbeSelector', className: 'tgl-btn' }),
-	          _react2.default.createElement('input', { id: 'macrophageSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.MACROPHAGE) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.MACROPHAGE }),
-	          _react2.default.createElement('label', { htmlFor: 'macrophageSelector', className: 'tgl-btn' }),
-	          _react2.default.createElement('input', { id: 'connectionsSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.CONNECTION) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.CONNECTION }),
-	          _react2.default.createElement('label', { htmlFor: 'connectionsSelector', className: 'tgl-btn' }),
-	          _react2.default.createElement('input', { id: 'godsnodeSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.GODSNODE) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.GODSNODE }),
-	          _react2.default.createElement('label', { htmlFor: 'godsnodeSelector', className: 'tgl-btn' })
-	        )
+	        _react2.default.createElement('div', { id: 'messageGraph' })
 	      )
 	    );
 	  },
@@ -1155,7 +1154,6 @@
 /***/ function(module, exports) {
 
 	// shim for using process in browser
-
 	var process = module.exports = {};
 
 	// cached from whatever global is present so that test runners that stub it
@@ -1166,22 +1164,84 @@
 	var cachedSetTimeout;
 	var cachedClearTimeout;
 
+	function defaultSetTimout() {
+	    throw new Error('setTimeout has not been defined');
+	}
+	function defaultClearTimeout () {
+	    throw new Error('clearTimeout has not been defined');
+	}
 	(function () {
-	  try {
-	    cachedSetTimeout = setTimeout;
-	  } catch (e) {
-	    cachedSetTimeout = function () {
-	      throw new Error('setTimeout is not defined');
+	    try {
+	        if (typeof setTimeout === 'function') {
+	            cachedSetTimeout = setTimeout;
+	        } else {
+	            cachedSetTimeout = defaultSetTimout;
+	        }
+	    } catch (e) {
+	        cachedSetTimeout = defaultSetTimout;
 	    }
-	  }
-	  try {
-	    cachedClearTimeout = clearTimeout;
-	  } catch (e) {
-	    cachedClearTimeout = function () {
-	      throw new Error('clearTimeout is not defined');
+	    try {
+	        if (typeof clearTimeout === 'function') {
+	            cachedClearTimeout = clearTimeout;
+	        } else {
+	            cachedClearTimeout = defaultClearTimeout;
+	        }
+	    } catch (e) {
+	        cachedClearTimeout = defaultClearTimeout;
 	    }
-	  }
 	} ())
+	function runTimeout(fun) {
+	    if (cachedSetTimeout === setTimeout) {
+	        //normal enviroments in sane situations
+	        return setTimeout(fun, 0);
+	    }
+	    // if setTimeout wasn't available but was latter defined
+	    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+	        cachedSetTimeout = setTimeout;
+	        return setTimeout(fun, 0);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedSetTimeout(fun, 0);
+	    } catch(e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+	            return cachedSetTimeout.call(null, fun, 0);
+	        } catch(e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+	            return cachedSetTimeout.call(this, fun, 0);
+	        }
+	    }
+
+
+	}
+	function runClearTimeout(marker) {
+	    if (cachedClearTimeout === clearTimeout) {
+	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
+	    }
+	    // if clearTimeout wasn't available but was latter defined
+	    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+	        cachedClearTimeout = clearTimeout;
+	        return clearTimeout(marker);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedClearTimeout(marker);
+	    } catch (e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+	            return cachedClearTimeout.call(null, marker);
+	        } catch (e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+	            return cachedClearTimeout.call(this, marker);
+	        }
+	    }
+
+
+
+	}
 	var queue = [];
 	var draining = false;
 	var currentQueue;
@@ -1206,7 +1266,7 @@
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = cachedSetTimeout(cleanUpNextTick);
+	    var timeout = runTimeout(cleanUpNextTick);
 	    draining = true;
 
 	    var len = queue.length;
@@ -1223,7 +1283,7 @@
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    cachedClearTimeout(timeout);
+	    runClearTimeout(timeout);
 	}
 
 	process.nextTick = function (fun) {
@@ -1235,7 +1295,7 @@
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        cachedSetTimeout(drainQueue, 0);
+	        runTimeout(drainQueue);
 	    }
 	};
 
@@ -20651,7 +20711,6 @@
 	  data: JSON object of the graph data
 	  updateDOM: function that will triger updates to the containing DOM
 	  */
-
 	  function NetworkGraph() {
 	    _classCallCheck(this, NetworkGraph);
 
@@ -20671,7 +20730,9 @@
 	      var _this = this;
 
 	      this._updateDOM = updateDOM;
-	      var vis = d3.select(selection).append('svg').attr('width', this.width).attr('height', this.height);
+	      var vis = d3.select(selection).append('svg');
+	      //.attr('width', this.width)
+	      //.attr('height', this.height);
 	      this.linksG = vis.append('g').attr('id', 'links');
 	      this.nodesG = vis.append('g').attr('id', 'nodes');
 	      this.messagesG = vis.append('g').attr('id', 'messages');
@@ -20829,6 +20890,7 @@
 	        return d.target.y;
 	      }).on('click', function (d) {
 	        if (_this4._selectorType.localeCompare(_globals.CONNECTION) === 0) {
+	          console.log(d.source, d.target);
 	          d.source.removePeer(d.target.nodeID).then(function () {
 	            return d.target.removePeer(d.source.nodeID);
 	          }).then(function () {
@@ -20893,12 +20955,10 @@
 	      });
 
 	      var newNodes = filteredData.nodes.map(function (nID) {
-	        //TODO: fix race condition, sometimes the code gets here without the network having created
-	        //the node yet.
 	        var n = _EthereumNetwork.EthereumNetwork.getNodeByID(nID);
 	        n.x = Math.floor(Math.random() * _this5.width);
 	        n.y = Math.floor(Math.random() * _this5.height);
-	        //TODO: scale radious based on number of peers
+	        //TODO: scale radius based on number of peers
 	        n.r = 10;
 	        return n;
 	      });
@@ -20934,7 +20994,7 @@
 
 	      if (this._selectorType.localeCompare(_globals.CONNECTION) === 0) {
 	        if (this._selectedConnection) {
-	          this._selectedConnection.data()[0].addPeer(selectedNode.nodeID);
+	          this._selectedConnection.data()[0].addPeer(selectedNode.enode);
 	          networkGraph.linksG.selectAll('line.mouselink').remove();
 	          this._selectedConnection = null;
 	          $('#networkGraph').unbind('mousemove');
@@ -21047,7 +21107,6 @@
 	  * @param  {json} data           JSON object of the graph data
 	  * @param  {Function} updateDOM  function that will triger updates to the containing DOM
 	  */
-
 	  function MessageGraph(selection, updateDOM) {
 	    _classCallCheck(this, MessageGraph);
 
@@ -21057,8 +21116,8 @@
 	      bottom: 20,
 	      left: 200
 	    };
-	    this.width = 660;
-	    this.height = 500;
+	    this.width = 400;
+	    this.height = 400;
 	  }
 
 	  _createClass(MessageGraph, [{
@@ -21070,9 +21129,9 @@
 
 	      this.messagesG = this.svg.append('g').attr('id', 'messages').attr('width', this.width - this.margin.left - this.margin.right).attr('height', this.height - this.margin.top - this.margin.bottom).attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')');
 
-	      this.messagesG.append('text').attr('class', 'x-label').attr('text-anchor', 'middle').attr('x', this.margin.right + (this.width - this.margin.left - this.margin.right) / 2).attr('y', -this.margin.top / 2).text('Node Identifier');
+	      this.svg.append('text').attr('class', 'x-label').attr('text-anchor', 'middle').attr('x', this.width / 2).attr('y', this.margin.top / 2).text('Node Identifier');
 
-	      this.messagesG.append('text').attr('class', 'y-label').attr('text-anchor', 'middle').attr('x', -this.margin.top - (this.height - this.margin.top - this.margin.bottom) / 2).attr('y', -this.margin.left / 4).attr('transform', 'rotate(-90)').text('Transaction Hash');
+	      this.svg.append('text').attr('class', 'y-label').attr('text-anchor', 'middle').attr('x', -this.height / 2).attr('y', this.margin.left / 2).attr('transform', 'rotate(-90)').text('Transaction Hash');
 
 	      this._update();
 	    }
@@ -21082,9 +21141,10 @@
 	      var uniqueCreators = this.messageData.map(function (data) {
 	        return data.creator;
 	      }).unique();
+	      var uniqueCreatorsSpacing = 80 * uniqueCreators.length;
 
-	      this.width = this.margin.left + this.margin.right + uniqueCreators.length * 5;
-	      //this.messagesG.attr('width', this.width - this.margin.left - this.margin.right);
+	      this.svg.attr('width', this.margin.left + this.margin.right + uniqueCreatorsSpacing);
+	      this.messagesG.attr('width', uniqueCreatorsSpacing);
 
 	      var uniqueAssignors = this.messageData.map(function (data) {
 	        return data.assignors;
@@ -21093,12 +21153,13 @@
 	      var uniqueHashes = this.messageData.map(function (data) {
 	        return data.hash;
 	      }).unique();
+	      var uniqueHashesSpacing = 80 * uniqueHashes.length;
 
-	      this.height = this.margin.top + this.margin.bottom + uniqueHashes.length * 5;
-	      //this.messagesG.attr('height', this.height - this.margin.top - this.margin.bottom);
+	      this.svg.attr('height', this.margin.top + this.margin.bottom + uniqueHashesSpacing);
+	      this.messagesG.attr('height', uniqueHashesSpacing);
 
-	      var x = d3.scale.ordinal().domain(uniqueCreators).rangeRoundBands([0, this.width - this.margin.right], 0.1);
-	      var y = d3.scale.ordinal().domain(uniqueHashes).rangeRoundBands([0, this.height - this.margin.bottom], 0.1);
+	      var x = d3.scale.ordinal().domain(uniqueCreators).rangeRoundBands([0, uniqueCreatorsSpacing], 0.1);
+	      var y = d3.scale.ordinal().domain(uniqueHashes).rangeRoundBands([0, uniqueHashesSpacing], 0.1);
 
 	      var xAxis = d3.svg.axis().scale(x).orient('top').tickSubdivide(true).tickSize(0);
 	      var yAxis = d3.svg.axis().scale(y).orient('left').tickSize(0);
@@ -21138,7 +21199,7 @@
 	      )*/;
 
 	      this.svg.select('.x-axis').remove();
-	      this.svg.append('g').attr('class', 'x-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 3 / 4 + ')').transition().call(xAxis).selectAll('text').attr('transform', 'rotate(-20)');
+	      this.svg.append('g').attr('class', 'x-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 6 / 7 + ')').transition().call(xAxis).selectAll('text').attr('transform', 'rotate(-20)');
 
 	      this.svg.select('.y-axis').remove();
 	      this.svg.append('g').attr('class', 'y-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')').transition().call(yAxis).selectAll('text').attr('transform', 'rotate(-45)');
@@ -21331,7 +21392,11 @@
 	      var evaluateNodeIDs = macrophageNodeIDs.length > 0 ? macrophageNodeIDs : allNodeIDs;
 	      window.sortedAllNodeIDs = sortedAllNodeIDs;
 	      var probabilityAssignments = evaluateNodeIDs.map(function (targetNodeID) {
-	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID]).map(function (hash) {
+	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID])
+	        //only look at messages that were related to the microbe
+	        .filter(function (hash) {
+	          return _this3._microbeTxHashes.includes(hash);
+	        }).map(function (hash) {
 	          return _this3.txHashMessages[targetNodeID][hash]
 	          //filter out messages that were sent by an evaluating node
 	          .filter(function (message) {
@@ -21373,7 +21438,8 @@
 
 	        //TODO: evaluate whether it's okay to normalize all the points
 	        //independently in this way, try other normalization functions
-	        ////norm alize points down to the MINIMUM_NETWORK_TIME
+
+	        ////normalize points down to the MINIMUM_NETWORK_TIME
 	        X = X.map(function (point) {
 	          var baselineX = Math.max(Math.min.apply(Math, _toConsumableArray(point.filter(function (p) {
 	            return p;
@@ -21579,9 +21645,8 @@
 	        return x0 ? 1 : 0;
 	      });
 	      x.forEach(function (x0, i) {
-	        //todo mus are keyed by cluster not data point
-	        newmu[i] += delta[i] * x0 * post[j][t];
-	        newmutotal[i] += delta[i] * post[j][t];
+	        newmu[t] += delta[i] * x0 * post[j][t];
+	        newmutotal[t] += delta[i] * post[j][t];
 	      });
 	    });
 	    newmutotal.forEach(function (total, i) {

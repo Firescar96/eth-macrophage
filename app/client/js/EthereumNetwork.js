@@ -10,7 +10,7 @@ EthereumNetwork._members = {};
 EthereumNetwork._nodeFilterCallbacks = [];
 
 EthereumNetwork._defaultBootnode;
-EthereumNetwork._currentNonce = 0;
+EthereumNetwork._currentNonce = {};
 
 EthereumNetwork._selectedMicrobe = null;
 EthereumNetwork.macrophageManager = macrophageManager;
@@ -38,7 +38,12 @@ EthereumNetwork.getNodeByID = function (id) {
 * @return {Promise}
 */
 EthereumNetwork.createNode = function (isMiner, serverIP, serverPort) {
-  let currentNonce = EthereumNetwork._currentNonce++;
+  let nonceKey = serverIP + serverPort;
+  if(!EthereumNetwork._currentNonce[nonceKey]) {
+    EthereumNetwork._currentNonce[nonceKey] = 0;
+  }
+
+  let currentNonce = EthereumNetwork._currentNonce[nonceKey]++;
   let defer = new Promise((resolve, reject) => {
     let newNode = new EthereumNode(currentNonce, serverIP, serverPort);
 
@@ -105,14 +110,7 @@ EthereumNetwork.toggleMicrobe = function (_microbe) {
     return;
   }
 
-  let alreadySelected = false;
-  EthereumNetwork.getMacrophages().some((macrophage, i) => {
-    if(macrophage === this._selectedMicrobe) {
-      alreadySelected = true;
-      return;
-    }
-  });
-  if(alreadySelected) {
+  if(EthereumNetwork.macrophageManager.isMacrophage(_microbe)) {
     return;
   }
 

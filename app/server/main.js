@@ -56,8 +56,7 @@ exports = module.exports = function (server) {
     gethInstanceConfig.rpcport = GETH_BASE_RPCPORT + curNonce;
     gethInstanceConfig.datadir = GETH_BASE_DATADIR + 'node' + curNonce + '/';
     gethInstanceConfig.logfile = gethInstanceConfig.datadir + 'output.log';
-    gethInstanceConfig.js = ASSETS_BASE_DATADIR  + isMiner ? 'pendmine.js' : 'periodicmine.js';
-
+    gethInstanceConfig.js = ASSETS_BASE_DATADIR  + (isMiner ? 'periodicmine.js' : 'pendmine.js');
     //this database is used on the client to get this node's received txs
     //
     txData[curNonce] = [];
@@ -103,7 +102,7 @@ exports = module.exports = function (server) {
       '--rpcapi=' + gethInstanceConfig.rpcapi, '--networkid=' + gethInstanceConfig.networkid,
       '--rpccorsdomain=' + gethInstanceConfig.rpccorsdomain, '--unlock=0',
       '--password=' + gethInstanceConfig.password, '--testnet', '--fast',
-      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js ' + gethInstanceConfig.js]);
+      '--maxpeers=' + gethInstanceConfig.maxpeers, 'js', gethInstanceConfig.js]);
 
       //For some reason geth flips the out and err output..or something
       cmd.stdout.on('data', (data) => {

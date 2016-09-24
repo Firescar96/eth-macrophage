@@ -104,6 +104,8 @@ class Analysis {
     let probabilityAssignments =
     evaluateNodeIDs.map((targetNodeID) => {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
+      //only look at messages that were related to the microbe
+      .filter((hash) => this._microbeTxHashes.includes(hash))
       .map((hash) => {
         return this.txHashMessages[targetNodeID][hash]
         //filter out messages that were sent by an evaluating node
@@ -146,7 +148,8 @@ class Analysis {
 
       //TODO: evaluate whether it's okay to normalize all the points
       //independently in this way, try other normalization functions
-      ////norm alize points down to the MINIMUM_NETWORK_TIME
+
+      ////normalize points down to the MINIMUM_NETWORK_TIME
       X = X.map((point) => {
         let baselineX = Math.max(Math.min(...point.filter((p) => p)), MINIMUM_NETWORK_TIME);
         return point.map((t) => t ? (t / baselineX) : null);
@@ -315,9 +318,8 @@ Analysis.mstep = function (X, K, Mu, P, Sigma, post, minVariance = 0.00000001) {
     X.forEach((x, t) => {
       let delta = x.map((x0) => x0 ? 1 : 0);
       x.forEach((x0, i) => {
-        //todo mus are keyed by cluster not data point
-        newmu[i] += delta[i] * x0 * post[j][t];
-        newmutotal[i] += delta[i] * post[j][t];
+        newmu[t] += delta[i] * x0 * post[j][t];
+        newmutotal[t] += delta[i] * post[j][t];
       });
     });
     newmutotal.forEach((total, i) => {

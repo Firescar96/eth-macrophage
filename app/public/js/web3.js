@@ -340,6 +340,7 @@
 	var Property = __webpack_require__(288);
 	var HttpProvider = __webpack_require__(322);
 	var IpcProvider = __webpack_require__(324);
+	var BigNumber = __webpack_require__(244);
 
 
 
@@ -381,6 +382,7 @@
 	    this.settings = new Settings();
 	};
 
+	Web3.prototype.BigNumber = BigNumber;
 	Web3.prototype.toHex = utils.toHex;
 	Web3.prototype.toAscii = utils.toAscii;
 	Web3.prototype.toUtf8 = utils.toUtf8;
@@ -505,10 +507,10 @@
 	        return null;
 	    }
 
-	    var payload = Jsonrpc.getInstance().toPayload(data.method, data.params);
+	    var payload = Jsonrpc.toPayload(data.method, data.params);
 	    var result = this.provider.send(payload);
 
-	    if (!Jsonrpc.getInstance().isValidResponse(result)) {
+	    if (!Jsonrpc.isValidResponse(result)) {
 	        throw errors.InvalidResponse(result);
 	    }
 
@@ -527,13 +529,13 @@
 	        return callback(errors.InvalidProvider());
 	    }
 
-	    var payload = Jsonrpc.getInstance().toPayload(data.method, data.params);
+	    var payload = Jsonrpc.toPayload(data.method, data.params);
 	    this.provider.sendAsync(payload, function (err, result) {
 	        if (err) {
 	            return callback(err);
 	        }
 	        
-	        if (!Jsonrpc.getInstance().isValidResponse(result)) {
+	        if (!Jsonrpc.isValidResponse(result)) {
 	            return callback(errors.InvalidResponse(result));
 	        }
 
@@ -553,7 +555,7 @@
 	        return callback(errors.InvalidProvider());
 	    }
 
-	    var payload = Jsonrpc.getInstance().toBatchPayload(data);
+	    var payload = Jsonrpc.toBatchPayload(data);
 
 	    this.provider.sendAsync(payload, function (err, results) {
 	        if (err) {
@@ -668,7 +670,7 @@
 	        return;
 	    }
 
-	    var payload = Jsonrpc.getInstance().toBatchPayload(pollsData);
+	    var payload = Jsonrpc.toBatchPayload(pollsData);
 	    
 	    // map the request id to they poll id
 	    var pollsIdMap = {};
@@ -701,7 +703,7 @@
 	        }).filter(function (result) {
 	            return !!result; 
 	        }).filter(function (result) {
-	            var valid = Jsonrpc.getInstance().isValidResponse(result);
+	            var valid = Jsonrpc.isValidResponse(result);
 	            if (!valid) {
 	                result.callback(errors.InvalidResponse(result));
 	            }
@@ -739,25 +741,13 @@
 	/** @file jsonrpc.js
 	 * @authors:
 	 *   Marek Kotewicz <marek@ethdev.com>
+	 *   Aaron Kumavis <aaron@kumavis.me>
 	 * @date 2015
 	 */
 
-	var Jsonrpc = function () {
-	    // singleton pattern
-	    if (arguments.callee._singletonInstance) {
-	        return arguments.callee._singletonInstance;
-	    }
-	    arguments.callee._singletonInstance = this;
-
-	    this.messageId = 1;
-	};
-
-	/**
-	 * @return {Jsonrpc} singleton
-	 */
-	Jsonrpc.getInstance = function () {
-	    var instance = new Jsonrpc();
-	    return instance;
+	// Initialize Jsonrpc as a simple object with utility functions.
+	var Jsonrpc = {
+	    messageId: 0
 	};
 
 	/**
@@ -768,15 +758,18 @@
 	 * @param {Array} params, an array of method params, optional
 	 * @returns {Object} valid jsonrpc payload object
 	 */
-	Jsonrpc.prototype.toPayload = function (method, params) {
+	Jsonrpc.toPayload = function (method, params) {
 	    if (!method)
 	        console.error('jsonrpc method should be specified!');
 
+	    // advance message ID
+	    Jsonrpc.messageId++;
+
 	    return {
 	        jsonrpc: '2.0',
+	        id: Jsonrpc.messageId,
 	        method: method,
-	        params: params || [],
-	        id: this.messageId++
+	        params: params || []
 	    };
 	};
 
@@ -787,12 +780,16 @@
 	 * @param {Object}
 	 * @returns {Boolean} true if response is valid, otherwise false
 	 */
-	Jsonrpc.prototype.isValidResponse = function (response) {
-	    return !!response &&
-	        !response.error &&
-	        response.jsonrpc === '2.0' &&
-	        typeof response.id === 'number' &&
-	        response.result !== undefined; // only undefined is not valid json object
+	Jsonrpc.isValidResponse = function (response) {
+	    return Array.isArray(response) ? response.every(validateSingleMessage) : validateSingleMessage(response);
+
+	    function validateSingleMessage(message){
+	      return !!message &&
+	        !message.error &&
+	        message.jsonrpc === '2.0' &&
+	        typeof message.id === 'number' &&
+	        message.result !== undefined; // only undefined is not valid json object
+	    }
 	};
 
 	/**
@@ -802,10 +799,9 @@
 	 * @param {Array} messages, an array of objects with method (required) and params (optional) fields
 	 * @returns {Array} batch payload
 	 */
-	Jsonrpc.prototype.toBatchPayload = function (messages) {
-	    var self = this;
+	Jsonrpc.toBatchPayload = function (messages) {
 	    return messages.map(function (message) {
-	        return self.toPayload(message.method, message.params);
+	        return Jsonrpc.toPayload(message.method, message.params);
 	    });
 	};
 
@@ -11283,7 +11279,7 @@
 	var padLeft = function (string, bytes) {
 	    var result = string;
 	    while (result.length < bytes * 2) {
-	        result = '00' + result;
+	        result = '0' + result;
 	    }
 	    return result;
 	};
@@ -11805,6 +11801,10 @@
 	            name: 'blockNumber',
 	            getter: 'eth_blockNumber',
 	            outputFormatter: utils.toDecimal
+	        }),
+	        new Property({
+	            name: 'protocolVersion',
+	            getter: 'eth_protocolVersion'
 	        })
 	    ];
 	};
@@ -11854,7 +11854,7 @@
 	    You should have received a copy of the GNU Lesser General Public License
 	    along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 	*/
-	/** 
+	/**
 	 * @file formatters.js
 	 * @author Marek Kotewicz <marek@ethdev.com>
 	 * @author Fabian Vogelsteller <fabian@ethdev.com>
@@ -11921,7 +11921,7 @@
 	        options[key] = utils.fromDecimal(options[key]);
 	    });
 
-	    return options; 
+	    return options;
 	};
 
 	/**
@@ -11946,12 +11946,12 @@
 	        options[key] = utils.fromDecimal(options[key]);
 	    });
 
-	    return options; 
+	    return options;
 	};
 
 	/**
 	 * Formats the output of a transaction to its proper values
-	 * 
+	 *
 	 * @method outputTransactionFormatter
 	 * @param {Object} tx
 	 * @returns {Object}
@@ -11970,7 +11970,7 @@
 
 	/**
 	 * Formats the output of a transaction receipt to its proper values
-	 * 
+	 *
 	 * @method outputTransactionReceiptFormatter
 	 * @param {Object} receipt
 	 * @returns {Object}
@@ -11996,7 +11996,7 @@
 	 * Formats the output of a block to its proper values
 	 *
 	 * @method outputBlockFormatter
-	 * @param {Object} block 
+	 * @param {Object} block
 	 * @returns {Object}
 	*/
 	var outputBlockFormatter = function(block) {
@@ -12024,7 +12024,7 @@
 
 	/**
 	 * Formats the output of a log
-	 * 
+	 *
 	 * @method outputLogFormatter
 	 * @param {Object} log object
 	 * @returns {Object} log
@@ -12065,7 +12065,7 @@
 	        return (topic.indexOf('0x') === 0) ? topic : utils.fromUtf8(topic);
 	    });
 
-	    return post; 
+	    return post;
 	};
 
 	/**
@@ -12117,6 +12117,10 @@
 	    result.startingBlock = utils.toDecimal(result.startingBlock);
 	    result.currentBlock = utils.toDecimal(result.currentBlock);
 	    result.highestBlock = utils.toDecimal(result.highestBlock);
+	    if (result.knownStates) {
+	        result.knownStates = utils.toDecimal(result.knownStates);
+	        result.pulledStates = utils.toDecimal(result.pulledStates);
+	    }
 
 	    return result;
 	};
@@ -12594,7 +12598,7 @@
 	                            filter.stopWatching();
 	                            callbackFired = true;
 
-	                            if(code.length > 2) {
+	                            if(code.length > 3) {
 
 	                                // console.log('Contract code deployed!');
 
@@ -14450,11 +14454,15 @@
 	    return this;
 	};
 
-	Filter.prototype.stopWatching = function () {
+	Filter.prototype.stopWatching = function (callback) {
 	    this.requestManager.stopPolling(this.filterId);
-	    // remove filter async
-	    this.implementation.uninstallFilter(this.filterId, function(){});
 	    this.callbacks = [];
+	    // remove filter async
+	    if (callback) {
+	        this.implementation.uninstallFilter(this.filterId, callback);
+	    } else {
+	        return this.implementation.uninstallFilter(this.filterId);
+	    }
 	};
 
 	Filter.prototype.get = function (callback) {
@@ -16011,8 +16019,8 @@
 	    });
 
 	    var unlockAccountAndSendTransaction = new Method({
-	        name: 'unlockAccountAndSendTransaction',
-	        call: 'personal_signAndSendTransaction',
+	        name: 'unlockAccountAndSendTransaction', // sendTransaction
+	        call: 'personal_signAndSendTransaction', // personal_sendTransaction
 	        params: 2,
 	        inputFormatter: [formatters.inputTransactionFormatter, null]
 	    });
@@ -16180,7 +16188,7 @@
 	        }).forEach(function (result, index) {
 	            if (requests[index].callback) {
 
-	                if (!Jsonrpc.getInstance().isValidResponse(result)) {
+	                if (!Jsonrpc.isValidResponse(result)) {
 	                    return requests[index].callback(errors.InvalidResponse(result));
 	                }
 
@@ -16229,12 +16237,8 @@
 	// workaround to use httpprovider in different envs
 	var XMLHttpRequest; // jshint ignore: line
 
-	// meteor server environment
-	if (typeof Meteor !== 'undefined' && Meteor.isServer) { // jshint ignore: line
-	    XMLHttpRequest = Npm.require('xmlhttprequest').XMLHttpRequest; // jshint ignore: line
-
 	// browser
-	} else if (typeof window !== 'undefined' && window.XMLHttpRequest) {
+	if (typeof window !== 'undefined' && window.XMLHttpRequest) {
 	    XMLHttpRequest = window.XMLHttpRequest; // jshint ignore: line
 
 	// node

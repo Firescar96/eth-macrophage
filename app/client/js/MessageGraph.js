@@ -17,8 +17,8 @@ class MessageGraph {
       bottom: 20,
       left:   200,
     };
-    this.width = 660;
-    this.height = 500;
+    this.width = 400;
+    this.height = 400;
   }
 
   init (selection, updateDOM) {
@@ -35,20 +35,20 @@ class MessageGraph {
     .attr('height', this.height - this.margin.top - this.margin.bottom)
     .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')');
 
-    this.messagesG
+    this.svg
     .append('text')
     .attr('class', 'x-label')
     .attr('text-anchor', 'middle')
-    .attr('x', this.margin.right + (this.width - this.margin.left - this.margin.right) / 2)
-    .attr('y', -this.margin.top / 2)
+    .attr('x', this.width / 2)
+    .attr('y', this.margin.top / 2)
     .text('Node Identifier');
 
-    this.messagesG
+    this.svg
     .append('text')
     .attr('class', 'y-label')
     .attr('text-anchor', 'middle')
-    .attr('x', -this.margin.top - (this.height - this.margin.top - this.margin.bottom) / 2)
-    .attr('y', -this.margin.left / 4)
+    .attr('x', -this.height / 2)
+    .attr('y', this.margin.left / 2)
     .attr('transform', 'rotate(-90)')
     .text('Transaction Hash');
 
@@ -59,9 +59,10 @@ class MessageGraph {
     let uniqueCreators = this.messageData
     .map((data) => data.creator)
     .unique();
+    let uniqueCreatorsSpacing = 80 * uniqueCreators.length;
 
-    this.width = this.margin.left + this.margin.right + uniqueCreators.length * 5;
-    //this.messagesG.attr('width', this.width - this.margin.left - this.margin.right);
+    this.svg.attr('width', this.margin.left + this.margin.right + uniqueCreatorsSpacing);
+    this.messagesG.attr('width', uniqueCreatorsSpacing);
 
     let uniqueAssignors = this.messageData
     .map((data) => data.assignors);
@@ -69,14 +70,15 @@ class MessageGraph {
     let uniqueHashes = this.messageData
     .map((data) => data.hash)
     .unique();
+    let uniqueHashesSpacing = 80 * uniqueHashes.length;
 
-    this.height = this.margin.top + this.margin.bottom + uniqueHashes.length * 5;
-    //this.messagesG.attr('height', this.height - this.margin.top - this.margin.bottom);
+    this.svg.attr('height', this.margin.top + this.margin.bottom + uniqueHashesSpacing);
+    this.messagesG.attr('height', uniqueHashesSpacing);
 
     let x = d3.scale.ordinal().domain(uniqueCreators)
-    .rangeRoundBands([0, this.width - this.margin.right], 0.1);
+    .rangeRoundBands([0, uniqueCreatorsSpacing], 0.1);
     let y = d3.scale.ordinal().domain(uniqueHashes)
-    .rangeRoundBands([0, this.height - this.margin.bottom], 0.1);
+    .rangeRoundBands([0, uniqueHashesSpacing], 0.1);
 
     let xAxis = d3.svg.axis().scale(x).orient('top')
     .tickSubdivide(true)
@@ -131,7 +133,7 @@ class MessageGraph {
     this.svg.select('.x-axis').remove();
     this.svg.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 3 / 4 + ')')
+    .attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 6 / 7 + ')')
     .transition()
     .call(xAxis)
     .selectAll('text')

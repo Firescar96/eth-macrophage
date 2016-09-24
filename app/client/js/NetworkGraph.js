@@ -23,8 +23,9 @@ class NetworkGraph {
   init (selection, updateDOM) {
     this._updateDOM = updateDOM;
     let vis = d3.select(selection)
-    .append('svg').attr('width', this.width)
-    .attr('height', this.height);
+    .append('svg')
+    //.attr('width', this.width)
+    //.attr('height', this.height);
     this.linksG = vis.append('g').attr('id', 'links');
     this.nodesG = vis.append('g').attr('id', 'nodes');
     this.messagesG = vis.append('g').attr('id', 'messages');
@@ -182,6 +183,7 @@ class NetworkGraph {
     .attr('y2', (d) => d.target.y)
     .on('click', (d) => {
       if(this._selectorType.localeCompare(CONNECTION) === 0) {
+        console.log(d.source, d.target);
         d.source.removePeer(d.target.nodeID)
         .then(() => {
           return d.target.removePeer(d.source.nodeID);
@@ -241,12 +243,10 @@ class NetworkGraph {
     });
 
     let newNodes = filteredData.nodes.map((nID) => {
-      //TODO: fix race condition, sometimes the code gets here without the network having created
-      //the node yet.
       let n = EthereumNetwork.getNodeByID(nID);
       n.x = Math.floor(Math.random() * this.width);
       n.y = Math.floor(Math.random() * this.height);
-      //TODO: scale radious based on number of peers
+      //TODO: scale radius based on number of peers
       n.r = 10;
       return n;
     });
@@ -279,7 +279,7 @@ class NetworkGraph {
   setSelectedNode (selectedNode) {
     if(this._selectorType.localeCompare(CONNECTION) === 0) {
       if(this._selectedConnection) {
-        this._selectedConnection.data()[0].addPeer(selectedNode.nodeID);
+        this._selectedConnection.data()[0].addPeer(selectedNode.enode);
         networkGraph.linksG.selectAll('line.mouselink').remove();
         this._selectedConnection = null;
         $('#networkGraph').unbind('mousemove');
