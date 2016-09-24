@@ -2,7 +2,6 @@ import {EthereumNetwork} from './EthereumNetwork.js';
 
 class EthereumNode {
 
-  //TODO: for some reason using constructor doesn't work with nodejs
   constructor (id, serverIP, serverPort) {
     this.id = id;
     this._serverIP = serverIP;
@@ -15,22 +14,23 @@ class EthereumNode {
       data = JSON.parse(data.data);
       switch (data.flag) {
         case 'txData':
-        if(data.nonce != this.id) {
-          return;
-        }
-        this._txFilterCallbacks.forEach((callback) => {
-          callback(this, data);
-        });
-        break;
+          if(data.nonce != this.id) {
+            return;
+          }
+          this._txFilterCallbacks.forEach((callback) => {
+            callback(this, data);
+          });
+          break;
         default:
-        if(this._wsCallbacks[data.uniqueIdent]) {
-          this._wsCallbacks[data.uniqueIdent](this, data);
-          delete this._wsCallbacks[data.uniqueIdent];
-        }
+          if(this._wsCallbacks[data.uniqueIdent]) {
+            this._wsCallbacks[data.uniqueIdent](this, data);
+            delete this._wsCallbacks[data.uniqueIdent];
+          }
       }
     };
     this.web3 = null;
     this.nodeID = '';
+    this.enode = '';
     this.filter = null;
     this.defaultAccount = null;
     this._role = '';
@@ -49,7 +49,7 @@ class EthereumNode {
   }
 
   callWS (data, callback) {
-    data.uniqueIdent = Math.floor(Math.random()*10000);
+    data.uniqueIdent = Math.floor(Math.random() * 10000);
     if(callback) {
       this._wsCallbacks[data.uniqueIdent] = callback;
     }
@@ -114,6 +114,7 @@ class EthereumNode {
         })
         .then(([err, nodeInfo]) => {
           this.nodeID = nodeInfo.id;
+          this.enode = nodeInfo.enode;
           return this.getAccounts();
         })
         .then(([err, accounts]) => {
@@ -159,10 +160,10 @@ class EthereumNode {
   }
 
   /*Adds a peer node. If no node is given adds the bootnode*/
-  addPeer (nodeID) {
-    nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
+  addPeer (_enode) {
+    let enode = _enode || EthereumNetwork.getDefaultBootnode().enode;
     let defer = new Promise( (fufill, reject) => {
-      this.web3.admin.addPeer(nodeID, (err, result)=>{
+      this.web3.admin.addPeer(enode, (err, result)=>{
         fufill([err, result]);
       });
     });
@@ -174,7 +175,7 @@ class EthereumNode {
     let addPeerPromises = [];
 
     EthereumNetwork.getNodeIDs().forEach((nodeID) => {
-      let defer  = this.addPeer(nodeInfo.id);
+      let defer  = this.addPeer(EthereumNetwork.getNodeByID(nodeID).enode);
       addPeerPromises.push(defer);
     });
 
@@ -187,10 +188,10 @@ class EthereumNode {
   }
 
   /*Removes a peer node. If no node is given adds the bootnode*/
-  removePeer (nodeID) {
-    nodeID = nodeID || EthereumNetwork.getDefaultBootnode().nodeID;
+  removePeer (_enode) {
+    let enode = _enode || EthereumNetwork.getDefaultBootnode().enode;
     let defer = new Promise( (fufill, reject) => {
-      this.web3.admin.removePeer(nodeID, (err, result)=>{
+      this.web3.admin.removePeer(enode, (err, result)=>{
         fufill([err, result]);
       });
     });

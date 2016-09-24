@@ -412,9 +412,6 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var EthereumNode = function () {
-
-	  //TODO: for some reason using constructor doesn't work with nodejs
-
 	  function EthereumNode(id, serverIP, serverPort) {
 	    var _this = this;
 
@@ -447,6 +444,7 @@
 	    };
 	    this.web3 = null;
 	    this.nodeID = '';
+	    this.enode = '';
 	    this.filter = null;
 	    this.defaultAccount = null;
 	    this._role = '';
@@ -543,6 +541,7 @@
 	            var nodeInfo = _ref4[1];
 
 	            _this3.nodeID = nodeInfo.id;
+	            _this3.enode = nodeInfo.enode;
 	            return _this3.getAccounts();
 	          }).then(function (_ref5) {
 	            var _ref6 = _slicedToArray(_ref5, 2);
@@ -604,12 +603,12 @@
 
 	  }, {
 	    key: 'addPeer',
-	    value: function addPeer(nodeID) {
+	    value: function addPeer(_enode) {
 	      var _this7 = this;
 
-	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
+	      var enode = _enode || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().enode;
 	      var defer = new Promise(function (fufill, reject) {
-	        _this7.web3.admin.addPeer(nodeID, function (err, result) {
+	        _this7.web3.admin.addPeer(enode, function (err, result) {
 	          fufill([err, result]);
 	        });
 	      });
@@ -626,7 +625,7 @@
 	      var addPeerPromises = [];
 
 	      _EthereumNetwork.EthereumNetwork.getNodeIDs().forEach(function (nodeID) {
-	        var defer = _this8.addPeer(nodeInfo.id);
+	        var defer = _this8.addPeer(_EthereumNetwork.EthereumNetwork.getNodeByID(nodeID).enode);
 	        addPeerPromises.push(defer);
 	      });
 
@@ -642,12 +641,12 @@
 
 	  }, {
 	    key: 'removePeer',
-	    value: function removePeer(nodeID) {
+	    value: function removePeer(_enode) {
 	      var _this9 = this;
 
-	      nodeID = nodeID || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().nodeID;
+	      var enode = _enode || _EthereumNetwork.EthereumNetwork.getDefaultBootnode().enode;
 	      var defer = new Promise(function (fufill, reject) {
-	        _this9.web3.admin.removePeer(nodeID, function (err, result) {
+	        _this9.web3.admin.removePeer(enode, function (err, result) {
 	          fufill([err, result]);
 	        });
 	      });
@@ -20789,6 +20788,7 @@
 	        return d.target.y;
 	      }).on('click', function (d) {
 	        if (_this4._selectorType.localeCompare(_globals.CONNECTION) === 0) {
+	          console.log(d.source, d.target);
 	          d.source.removePeer(d.target.nodeID).then(function () {
 	            return d.target.removePeer(d.source.nodeID);
 	          }).then(function () {
@@ -20853,12 +20853,10 @@
 	      });
 
 	      var newNodes = filteredData.nodes.map(function (nID) {
-	        //TODO: fix race condition, sometimes the code gets here without the network having created
-	        //the node yet.
 	        var n = _EthereumNetwork.EthereumNetwork.getNodeByID(nID);
 	        n.x = Math.floor(Math.random() * _this5.width);
 	        n.y = Math.floor(Math.random() * _this5.height);
-	        //TODO: scale radious based on number of peers
+	        //TODO: scale radius based on number of peers
 	        n.r = 10;
 	        return n;
 	      });
@@ -20894,7 +20892,7 @@
 
 	      if (this._selectorType.localeCompare(_globals.CONNECTION) === 0) {
 	        if (this._selectedConnection) {
-	          this._selectedConnection.data()[0].addPeer(selectedNode.nodeID);
+	          this._selectedConnection.data()[0].addPeer(selectedNode.enode);
 	          networkGraph.linksG.selectAll('line.mouselink').remove();
 	          this._selectedConnection = null;
 	          $('#networkGraph').unbind('mousemove');
@@ -21339,7 +21337,8 @@
 
 	        //TODO: evaluate whether it's okay to normalize all the points
 	        //independently in this way, try other normalization functions
-	        ////norm alize points down to the MINIMUM_NETWORK_TIME
+
+	        ////normalize points down to the MINIMUM_NETWORK_TIME
 	        X = X.map(function (point) {
 	          var baselineX = Math.max(Math.min.apply(Math, _toConsumableArray(point.filter(function (p) {
 	            return p;
@@ -21545,9 +21544,8 @@
 	        return x0 ? 1 : 0;
 	      });
 	      x.forEach(function (x0, i) {
-	        //todo mus are keyed by cluster not data point
-	        newmu[i] += delta[i] * x0 * post[j][t];
-	        newmutotal[i] += delta[i] * post[j][t];
+	        newmu[t] += delta[i] * x0 * post[j][t];
+	        newmutotal[t] += delta[i] * post[j][t];
 	      });
 	    });
 	    newmutotal.forEach(function (total, i) {
