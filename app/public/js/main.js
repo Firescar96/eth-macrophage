@@ -55,7 +55,7 @@
 	var _reactMounter = __webpack_require__(171);
 
 	var MICROBE_ADDR = { ip: '127.0.0.1', port: 4000 };
-	var MACROPHAGE_ADDRS = [{ ip: 'macrophage1.westus.cloudapp.azure.com', port: 4000 }, { ip: 'macrophage2.canadacentral.cloudapp.azure.com', port: 4000 }, { ip: 'macrophage3.southcentralus.cloudapp.azure.com', port: 4000 }, { ip: 'macrophage4.brazilsouth.cloudapp.azure.com', port: 4000 }];
+	var MACROPHAGE_ADDRS = [{ ip: '127.0.0.1', port: 4000 }];
 
 	_EthereumNetwork.EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
 	  _EthereumNetwork.EthereumNetwork.toggleMicrobe(bootnode);
@@ -816,6 +816,10 @@
 	      var err = _ref2[0];
 	      var result = _ref2[1];
 
+	      if (err) {
+	        console.error(err);
+	        return;
+	      }
 	      console.log(result);
 	      _Analysis.analysis.addMicrobeTxHash(result);
 	    });
@@ -847,65 +851,65 @@
 	        null,
 	        _react2.default.createElement(
 	          'div',
-	          { id: 'nodeSidebar' },
-	          nodeButtons
-	        ),
-	        _react2.default.createElement(
-	          'div',
-	          { id: 'graphs' },
+	          { id: 'networkDashboard' },
+	          _react2.default.createElement(
+	            'div',
+	            { id: 'nodeSidebar' },
+	            nodeButtons
+	          ),
 	          _react2.default.createElement('div', { id: 'networkGraph' }),
-	          _react2.default.createElement('div', { id: 'messageGraph' })
+	          _react2.default.createElement(
+	            'div',
+	            { id: 'actionSidebar' },
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.addNode, disabled: true },
+	              'add node'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', disabled: true },
+	              'remove node'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.addAllPeers, disabled: !isNodeSelected },
+	              'connect to all peers'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.sendMessage, disabled: !isNodeSelected },
+	              'send message'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.runEMAnalysis },
+	              'run EM analysis'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { className: 'nodeAction', onClick: this.resetAnalysis },
+	              'reset analysis'
+	            ),
+	            _react2.default.createElement('input', { id: 'microbeSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.MICROBE) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.MICROBE }),
+	            _react2.default.createElement('label', { htmlFor: 'microbeSelector', className: 'tgl-btn' }),
+	            _react2.default.createElement('input', { id: 'macrophageSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.MACROPHAGE) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.MACROPHAGE }),
+	            _react2.default.createElement('label', { htmlFor: 'macrophageSelector', className: 'tgl-btn' }),
+	            _react2.default.createElement('input', { id: 'connectionsSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.CONNECTION) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.CONNECTION }),
+	            _react2.default.createElement('label', { htmlFor: 'connectionsSelector', className: 'tgl-btn' }),
+	            _react2.default.createElement('input', { id: 'godsnodeSelector', type: 'checkbox', className: 'tgl tgl-flat',
+	              checked: this.state.selectorType.localeCompare(_globals.GODSNODE) === 0 ? 'checked' : '',
+	              onChange: this.changeSelectorType, value: _globals.GODSNODE }),
+	            _react2.default.createElement('label', { htmlFor: 'godsnodeSelector', className: 'tgl-btn' })
+	          )
 	        ),
-	        _react2.default.createElement(
-	          'div',
-	          { id: 'actionSidebar' },
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.addNode, disabled: true },
-	            'add node'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', disabled: true },
-	            'remove node'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.addAllPeers, disabled: !isNodeSelected },
-	            'connect to all peers'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.sendMessage, disabled: !isNodeSelected },
-	            'send message'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.runEMAnalysis },
-	            'run EM analysis'
-	          ),
-	          _react2.default.createElement(
-	            'button',
-	            { className: 'nodeAction', onClick: this.resetAnalysis },
-	            'reset analysis'
-	          ),
-	          _react2.default.createElement('input', { id: 'microbeSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.MICROBE) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.MICROBE }),
-	          _react2.default.createElement('label', { htmlFor: 'microbeSelector', className: 'tgl-btn' }),
-	          _react2.default.createElement('input', { id: 'macrophageSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.MACROPHAGE) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.MACROPHAGE }),
-	          _react2.default.createElement('label', { htmlFor: 'macrophageSelector', className: 'tgl-btn' }),
-	          _react2.default.createElement('input', { id: 'connectionsSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.CONNECTION) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.CONNECTION }),
-	          _react2.default.createElement('label', { htmlFor: 'connectionsSelector', className: 'tgl-btn' }),
-	          _react2.default.createElement('input', { id: 'godsnodeSelector', type: 'checkbox', className: 'tgl tgl-flat',
-	            checked: this.state.selectorType.localeCompare(_globals.GODSNODE) === 0 ? 'checked' : '',
-	            onChange: this.changeSelectorType, value: _globals.GODSNODE }),
-	          _react2.default.createElement('label', { htmlFor: 'godsnodeSelector', className: 'tgl-btn' })
-	        )
+	        _react2.default.createElement('div', { id: 'messageGraph' })
 	      )
 	    );
 	  },
@@ -20626,7 +20630,9 @@
 	      var _this = this;
 
 	      this._updateDOM = updateDOM;
-	      var vis = d3.select(selection).append('svg').attr('width', this.width).attr('height', this.height);
+	      var vis = d3.select(selection).append('svg');
+	      //.attr('width', this.width)
+	      //.attr('height', this.height);
 	      this.linksG = vis.append('g').attr('id', 'links');
 	      this.nodesG = vis.append('g').attr('id', 'nodes');
 	      this.messagesG = vis.append('g').attr('id', 'messages');
@@ -21012,8 +21018,8 @@
 	      bottom: 20,
 	      left: 200
 	    };
-	    this.width = 660;
-	    this.height = 500;
+	    this.width = 400;
+	    this.height = 400;
 	  }
 
 	  _createClass(MessageGraph, [{
@@ -21025,9 +21031,9 @@
 
 	      this.messagesG = this.svg.append('g').attr('id', 'messages').attr('width', this.width - this.margin.left - this.margin.right).attr('height', this.height - this.margin.top - this.margin.bottom).attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')');
 
-	      this.messagesG.append('text').attr('class', 'x-label').attr('text-anchor', 'middle').attr('x', this.margin.right + (this.width - this.margin.left - this.margin.right) / 2).attr('y', -this.margin.top / 2).text('Node Identifier');
+	      this.svg.append('text').attr('class', 'x-label').attr('text-anchor', 'middle').attr('x', this.width / 2).attr('y', this.margin.top / 2).text('Node Identifier');
 
-	      this.messagesG.append('text').attr('class', 'y-label').attr('text-anchor', 'middle').attr('x', -this.margin.top - (this.height - this.margin.top - this.margin.bottom) / 2).attr('y', -this.margin.left / 4).attr('transform', 'rotate(-90)').text('Transaction Hash');
+	      this.svg.append('text').attr('class', 'y-label').attr('text-anchor', 'middle').attr('x', -this.height / 2).attr('y', this.margin.left / 2).attr('transform', 'rotate(-90)').text('Transaction Hash');
 
 	      this._update();
 	    }
@@ -21037,9 +21043,10 @@
 	      var uniqueCreators = this.messageData.map(function (data) {
 	        return data.creator;
 	      }).unique();
+	      var uniqueCreatorsSpacing = 80 * uniqueCreators.length;
 
-	      this.width = this.margin.left + this.margin.right + uniqueCreators.length * 5;
-	      //this.messagesG.attr('width', this.width - this.margin.left - this.margin.right);
+	      this.svg.attr('width', this.margin.left + this.margin.right + uniqueCreatorsSpacing);
+	      this.messagesG.attr('width', uniqueCreatorsSpacing);
 
 	      var uniqueAssignors = this.messageData.map(function (data) {
 	        return data.assignors;
@@ -21048,12 +21055,13 @@
 	      var uniqueHashes = this.messageData.map(function (data) {
 	        return data.hash;
 	      }).unique();
+	      var uniqueHashesSpacing = 80 * uniqueHashes.length;
 
-	      this.height = this.margin.top + this.margin.bottom + uniqueHashes.length * 5;
-	      //this.messagesG.attr('height', this.height - this.margin.top - this.margin.bottom);
+	      this.svg.attr('height', this.margin.top + this.margin.bottom + uniqueHashesSpacing);
+	      this.messagesG.attr('height', uniqueHashesSpacing);
 
-	      var x = d3.scale.ordinal().domain(uniqueCreators).rangeRoundBands([0, this.width - this.margin.right], 0.1);
-	      var y = d3.scale.ordinal().domain(uniqueHashes).rangeRoundBands([0, this.height - this.margin.bottom], 0.1);
+	      var x = d3.scale.ordinal().domain(uniqueCreators).rangeRoundBands([0, uniqueCreatorsSpacing], 0.1);
+	      var y = d3.scale.ordinal().domain(uniqueHashes).rangeRoundBands([0, uniqueHashesSpacing], 0.1);
 
 	      var xAxis = d3.svg.axis().scale(x).orient('top').tickSubdivide(true).tickSize(0);
 	      var yAxis = d3.svg.axis().scale(y).orient('left').tickSize(0);
@@ -21093,7 +21101,7 @@
 	      )*/;
 
 	      this.svg.select('.x-axis').remove();
-	      this.svg.append('g').attr('class', 'x-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 3 / 4 + ')').transition().call(xAxis).selectAll('text').attr('transform', 'rotate(-20)');
+	      this.svg.append('g').attr('class', 'x-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top * 6 / 7 + ')').transition().call(xAxis).selectAll('text').attr('transform', 'rotate(-20)');
 
 	      this.svg.select('.y-axis').remove();
 	      this.svg.append('g').attr('class', 'y-axis').attr('transform', 'translate(' + this.margin.left + ', ' + this.margin.top + ')').transition().call(yAxis).selectAll('text').attr('transform', 'rotate(-45)');
@@ -21286,7 +21294,11 @@
 	      var evaluateNodeIDs = macrophageNodeIDs.length > 0 ? macrophageNodeIDs : allNodeIDs;
 	      window.sortedAllNodeIDs = sortedAllNodeIDs;
 	      var probabilityAssignments = evaluateNodeIDs.map(function (targetNodeID) {
-	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID]).map(function (hash) {
+	        var messageGroups = Object.keys(_this3.txHashMessages[targetNodeID])
+	        //only look at messages that were related to the microbe
+	        .filter(function (hash) {
+	          return _this3._microbeTxHashes.includes(hash);
+	        }).map(function (hash) {
 	          return _this3.txHashMessages[targetNodeID][hash]
 	          //filter out messages that were sent by an evaluating node
 	          .filter(function (message) {

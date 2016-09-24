@@ -5,10 +5,7 @@ import {mount} from 'react-mounter';
 
 const MICROBE_ADDR = {ip: '127.0.0.1', port: 4000};
 const MACROPHAGE_ADDRS = [
-  {ip: 'macrophage1.westus.cloudapp.azure.com', port: 4000},
-  {ip: 'macrophage2.canadacentral.cloudapp.azure.com', port: 4000},
-  {ip: 'macrophage3.southcentralus.cloudapp.azure.com', port: 4000},
-  {ip: 'macrophage4.brazilsouth.cloudapp.azure.com', port: 4000},
+  {ip: '127.0.0.1', port: 4000},
 ];
 
 EthereumNetwork.createNode(false, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((bootnode) => {

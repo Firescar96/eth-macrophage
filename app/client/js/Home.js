@@ -14,15 +14,15 @@ let navbar = (
 
 /*eslint-disable no-unused-vars*/
 let NodeButton = React.createClass({
-/*eslint-enable no-unused-vars*/
+  /*eslint-enable no-unused-vars*/
   onClick () {
     switch (this.props.role) {
       case MICROBE:
-        EthereumNetwork.toggleMicrobe(EthereumNetwork.getNodeByID(this.props.nodeID));
-        break;
+      EthereumNetwork.toggleMicrobe(EthereumNetwork.getNodeByID(this.props.nodeID));
+      break;
       case MACROPHAGE:
-        EthereumNetwork.toggleMacrophage(EthereumNetwork.getNodeByID(this.props.nodeID));
-        break;
+      EthereumNetwork.toggleMacrophage(EthereumNetwork.getNodeByID(this.props.nodeID));
+      break;
       default:
     }
     networkGraph.setSelectedNode(EthereumNetwork.getNodeByID(this.props.nodeID));
@@ -79,6 +79,10 @@ var Home = React.createClass({
       value: 1,
     })
     .then(([err, result]) => {
+      if(err) {
+        console.error(err);
+        return;
+      }
       console.log(result);
       analysis.addMicrobeTxHash(result);
     });
@@ -104,51 +108,51 @@ var Home = React.createClass({
         {navbar}
 
         <main>
-          <div id="nodeSidebar">
-            {nodeButtons}
-          </div>
+          <div id="networkDashboard">
+            <div id="nodeSidebar">
+              {nodeButtons}
+            </div>
 
-          <div id="graphs">
             <div id="networkGraph"></div>
-            <div id="messageGraph"></div>
-          </div>
 
-          <div id="actionSidebar">
-            <button className="nodeAction" onClick={this.addNode} disabled>
-              add node
-            </button>
-            <button className="nodeAction" disabled>
-              remove node
-            </button>
-            <button className="nodeAction" onClick={this.addAllPeers} disabled={!isNodeSelected}>
-              connect to all peers
-            </button>
-            <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
-              send message
-            </button>
-            <button className="nodeAction" onClick={this.runEMAnalysis}>
-              run EM analysis
-            </button>
-            <button className="nodeAction" onClick={this.resetAnalysis}>
-              reset analysis
-            </button>
-            <input id="microbeSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.selectorType.localeCompare(MICROBE) === 0 ? 'checked' : ''}
-              onChange={this.changeSelectorType} value={MICROBE}/>
-            <label htmlFor="microbeSelector" className="tgl-btn"></label>
-            <input id="macrophageSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.selectorType.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
-              onChange={this.changeSelectorType} value={MACROPHAGE}/>
-            <label htmlFor="macrophageSelector" className="tgl-btn"></label>
-            <input id="connectionsSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.selectorType.localeCompare(CONNECTION) === 0 ? 'checked' : ''}
-              onChange={this.changeSelectorType} value={CONNECTION}/>
-            <label htmlFor="connectionsSelector" className="tgl-btn"></label>
-            <input id="godsnodeSelector" type="checkbox" className="tgl tgl-flat"
-              checked={this.state.selectorType.localeCompare(GODSNODE) === 0 ? 'checked' : ''}
-              onChange={this.changeSelectorType} value={GODSNODE}/>
-            <label htmlFor="godsnodeSelector" className="tgl-btn"></label>
+            <div id="actionSidebar">
+              <button className="nodeAction" onClick={this.addNode} disabled>
+                add node
+              </button>
+              <button className="nodeAction" disabled>
+                remove node
+              </button>
+              <button className="nodeAction" onClick={this.addAllPeers} disabled={!isNodeSelected}>
+                connect to all peers
+              </button>
+              <button className="nodeAction" onClick={this.sendMessage} disabled={!isNodeSelected}>
+                send message
+              </button>
+              <button className="nodeAction" onClick={this.runEMAnalysis}>
+                run EM analysis
+              </button>
+              <button className="nodeAction" onClick={this.resetAnalysis}>
+                reset analysis
+              </button>
+              <input id="microbeSelector" type="checkbox" className="tgl tgl-flat"
+                checked={this.state.selectorType.localeCompare(MICROBE) === 0 ? 'checked' : ''}
+                onChange={this.changeSelectorType} value={MICROBE}/>
+              <label htmlFor="microbeSelector" className="tgl-btn"></label>
+              <input id="macrophageSelector" type="checkbox" className="tgl tgl-flat"
+                checked={this.state.selectorType.localeCompare(MACROPHAGE) === 0 ? 'checked' : ''}
+                onChange={this.changeSelectorType} value={MACROPHAGE}/>
+              <label htmlFor="macrophageSelector" className="tgl-btn"></label>
+              <input id="connectionsSelector" type="checkbox" className="tgl tgl-flat"
+                checked={this.state.selectorType.localeCompare(CONNECTION) === 0 ? 'checked' : ''}
+                onChange={this.changeSelectorType} value={CONNECTION}/>
+              <label htmlFor="connectionsSelector" className="tgl-btn"></label>
+              <input id="godsnodeSelector" type="checkbox" className="tgl tgl-flat"
+                checked={this.state.selectorType.localeCompare(GODSNODE) === 0 ? 'checked' : ''}
+                onChange={this.changeSelectorType} value={GODSNODE}/>
+              <label htmlFor="godsnodeSelector" className="tgl-btn"></label>
+            </div>
           </div>
+          <div id="messageGraph"></div>
         </main>
 
       </div>

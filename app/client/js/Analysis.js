@@ -104,6 +104,8 @@ class Analysis {
     let probabilityAssignments =
     evaluateNodeIDs.map((targetNodeID) => {
       let messageGroups =  Object.keys(this.txHashMessages[targetNodeID])
+      //only look at messages that were related to the microbe
+      .filter((hash) => this._microbeTxHashes.includes(hash))
       .map((hash) => {
         return this.txHashMessages[targetNodeID][hash]
         //filter out messages that were sent by an evaluating node

@@ -23,8 +23,9 @@ class NetworkGraph {
   init (selection, updateDOM) {
     this._updateDOM = updateDOM;
     let vis = d3.select(selection)
-    .append('svg').attr('width', this.width)
-    .attr('height', this.height);
+    .append('svg')
+    //.attr('width', this.width)
+    //.attr('height', this.height);
     this.linksG = vis.append('g').attr('id', 'links');
     this.nodesG = vis.append('g').attr('id', 'nodes');
     this.messagesG = vis.append('g').attr('id', 'messages');
