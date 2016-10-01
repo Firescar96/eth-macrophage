@@ -3,7 +3,7 @@ import {networkGraph} from './NetworkGraph.js';
 import {messageGraph} from './MessageGraph.js';
 import {EthereumNetwork} from './EthereumNetwork.js';
 import {analysis} from './Analysis.js';
-import {MICROBE, MACROPHAGE, CONNECTION, GODSNODE} from './lib/globals.js';
+import {MICROBE, MACROPHAGE, CONNECTION, GODSNODE, DEFAULT_ADDR} from './lib/globals.js';
 require('../sass/home.scss');
 
 let headline = (
@@ -64,8 +64,7 @@ var Home = React.createClass({
     setInterval(updateNodes.bind(this), 1000);
   },
   addNode () {
-    EthereumNetwork.createNode(false).then((newNode) => {
-    });
+    EthereumNetwork.createNode(false, DEFAULT_ADDR.ip, DEFAULT_ADDR.port);
   },
   addAllPeers () {
     EthereumNetwork.getSelectedMicrobe().addAllPeers();
@@ -128,7 +127,7 @@ var Home = React.createClass({
 
             <div id="actionSidebar">
              <h2>Action Panel</h2>
-              <button className="nodeAction" onClick={this.addNode} disabled>
+              <button className="nodeAction" onClick={this.addNode}>
                 add node
               </button>
               <button className="nodeAction" disabled>

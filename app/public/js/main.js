@@ -54,8 +54,10 @@
 
 	var _reactMounter = __webpack_require__(171);
 
-	var MICROBE_ADDR = { ip: '127.0.0.1', port: 4000 };
-	var MACROPHAGE_ADDRS = [{ ip: '127.0.0.1', port: 4000 }];
+	var _globals = __webpack_require__(3);
+
+	var MICROBE_ADDR = _globals.DEFAULT_ADDR;
+	var MACROPHAGE_ADDRS = [_globals.DEFAULT_ADDR];
 
 	_EthereumNetwork.EthereumNetwork.createNode(true, MICROBE_ADDR.ip, MICROBE_ADDR.port).then(function (bootnode) {
 	  _EthereumNetwork.EthereumNetwork.toggleMicrobe(bootnode);
@@ -302,11 +304,13 @@
 	var MACROPHAGE = 'macrophage';
 	var CONNECTION = 'connections';
 	var GODSNODE = 'godsnode';
+	var DEFAULT_ADDR = { ip: '127.0.0.1', port: 4000 };
 
 	exports.MICROBE = MICROBE;
 	exports.MACROPHAGE = MACROPHAGE;
 	exports.CONNECTION = CONNECTION;
 	exports.GODSNODE = GODSNODE;
+	exports.DEFAULT_ADDR = DEFAULT_ADDR;
 
 /***/ },
 /* 4 */
@@ -818,7 +822,7 @@
 	    setInterval(updateNodes.bind(this), 1000);
 	  },
 	  addNode: function addNode() {
-	    _EthereumNetwork.EthereumNetwork.createNode(false).then(function (newNode) {});
+	    _EthereumNetwork.EthereumNetwork.createNode(false, _globals.DEFAULT_ADDR.ip, _globals.DEFAULT_ADDR.port);
 	  },
 	  addAllPeers: function addAllPeers() {
 	    _EthereumNetwork.EthereumNetwork.getSelectedMicrobe().addAllPeers();
@@ -903,7 +907,7 @@
 	            ),
 	            _react2.default.createElement(
 	              'button',
-	              { className: 'nodeAction', onClick: this.addNode, disabled: true },
+	              { className: 'nodeAction', onClick: this.addNode },
 	              'add node'
 	            ),
 	            _react2.default.createElement(

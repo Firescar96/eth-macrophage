@@ -2,10 +2,11 @@ import './lib/lib.js';
 import {EthereumNetwork} from './EthereumNetwork.js';
 import {Home} from './Home.js';
 import {mount} from 'react-mounter';
+import {DEFAULT_ADDR} from './lib/globals.js';
 
-const MICROBE_ADDR = {ip: '127.0.0.1', port: 4000};
+const MICROBE_ADDR = DEFAULT_ADDR;
 const MACROPHAGE_ADDRS = [
-  {ip: '127.0.0.1', port: 4000},
+  DEFAULT_ADDR,
 ];
 
 EthereumNetwork.createNode(true, MICROBE_ADDR.ip, MICROBE_ADDR.port).then((bootnode) => {
